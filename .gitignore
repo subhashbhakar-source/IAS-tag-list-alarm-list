@@ -1,0 +1,5 @@
+data.json
+data_raw.json
+group_input.json
+extract/
+*.log

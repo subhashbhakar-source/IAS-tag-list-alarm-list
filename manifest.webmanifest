@@ -1,0 +1,10 @@
+{
+  "name": "IAS Alarm & Tag Finder",
+  "short_name": "IAS Tags",
+  "description": "Offline search of Al Areef IAS, AutoChief and WinGD X72DF-2.1 tags, alarms and signal paths.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#eef1f4",
+  "theme_color": "#1d5d8c",
+  "icons": [{"src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}]
+}
