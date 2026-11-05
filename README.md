@@ -15,8 +15,12 @@ For any tag or alarm text it shows:
 
 ## Status
 
-First build (5 Nov 2026): all sources extracted, **verification deferred** at the owner's request. The numbers have not yet been
-re-checked line by line against the source pages. Treat every value as "check on the page before acting" until the verified build replaces this one.
+First build (5 Nov 2026). Verification was deferred at the owner's request to save credits, but seven sources had already
+been checked line by line before the cancel: the Kongsberg AutoChief tag database (IO list, connection arrangement,
+project parameters), the AutoChief manual, the WiCE control signal list, the DENIS-WiCE safety list, the Machinery & Ballast
+KFDD and part 1 of the machinery operating manual. **Not yet verified:** instrument list, IM failure IDs, cargo / PMS /
+ESD / GMS / vapour-handling KFDDs, K-Chief system docs, machinery manual parts 2-3, K-Chief operator / GVU / DCM guides.
+Treat every value as "check on the page before acting"; values read by OCR are marked in the app.
 
 ## Files
 

@@ -10,7 +10,7 @@ d['examples'] = ex
 d['meta'] = {'built': built, 'foot':
   'Built ' + built + ' from Kongsberg K-Chief 700 KFDDs (H2700–H2705), MIMIC book 5354211, AutoChief 600 manual for H2701 (Al Rahba, sister ship) incl. tag database 5314700/C, '
   'WinGD WiCE control list DAAD139037, DENIS-WiCE list DAAD139034, instrument list 50089765, IM X72DF-2.1 and the Al Rahba machinery manual. '
-  'Build of ' + built + ': the extracted data has NOT yet been checked line by line against the source pages (verification deferred). '
+  'Build of ' + built + ': 7 of 17 sources were checked line by line against the source pages (AutoChief tag database and manual, WiCE and DENIS lists, Machinery KFDD, machinery manual part 1); the rest is NOT yet verified. '
   'Set points and addresses can differ between sister ships: confirm on your own IAS and the source page before acting.'}
 json.dump(d, open(SCR + '/app/data.json', 'w'), separators=(',', ':'))
 print('data.json', round(len(json.dumps(d, separators=(",", ":"))) / 1e6, 2), 'MB')
