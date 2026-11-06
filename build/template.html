@@ -322,6 +322,15 @@ function groupSection(r){
   return '<div class="sec"><div class="sech">Same measurement — ' + esc(g.title) + '</div>' + countPills(g) +
     (sibs.length ? '<div class="chips">' + sibs.map(i => { const s = D.sig[i]; return '<span style="display:inline-flex;gap:4px;align-items:center">' + go(s.k, (s.rl || []).map(x => ROLE[x]).join(' / ')) + '</span>'; }).join('') + '</div>' : '') + '</div>';
 }
+const SYSSCR = new Map();
+function sysScreens(r){
+  if (!SYSSCR.has(r.s)){
+    const l = [];
+    D.scr.forEach((x, i) => { if ((x.sys || []).includes(r.s) && (!r.e || !x.e || x.e === (r.e === 'P' ? 'P' : r.e === 'S' ? 'S' : x.e))) l.push(i); });
+    SYSSCR.set(r.s, l.slice(0, 6));
+  }
+  return SYSSCR.get(r.s);
+}
 function countPills(g){
   const c = g.cnt || {};
   return '<div class="count">' + ['A','S','C','L','I','X'].filter(k => c[k]).map(k => roleBadge(k, '× ' + c[k])).join('') + '</div>';
@@ -343,7 +352,8 @@ function cardSig(r, exact){
     groupSection(r) +
     (r.rel && r.rel.length ? '<div class="sec"><div class="sech">Follow-up tags</div><div class="chips">' + r.rel.map(t => go(t, '', 'small')).join('') + '</div></div>' : '') +
     (r.fn && r.fn.length ? '<div class="sec"><div class="sech">Logic that uses it</div>' + r.fn.map(i => '<div><button class="link" data-fn="' + i + '">' + esc(D.fn[i].title) + ' &#8594;</button></div>').join('') + '</div>' : '') +
-    (r.scr && r.scr.length ? '<div class="sec"><div class="sech">Shown on IAS screen</div>' + r.scr.map(i => '<div><button class="link" data-scr="' + i + '">' + esc(D.scr[i].title) + ' <span class="sub">(mimic book p.' + esc(D.scr[i].page) + ')</span></button></div>').join('') + '</div>' : '') +
+    (r.scr && r.scr.length ? '<div class="sec"><div class="sech">Shown on IAS screen</div>' + r.scr.map(i => '<div><button class="link" data-scr="' + i + '">' + esc(D.scr[i].title) + ' <span class="sub">(mimic book p.' + esc(D.scr[i].page) + ')</span></button></div>').join('') + '</div>' :
+      sysScreens(r).length ? '<div class="sec"><div class="sech">IAS screens for this system</div>' + sysScreens(r).map(i => '<div><button class="link" data-scr="' + i + '">' + esc(D.scr[i].title) + ' <span class="sub">(p.' + esc(D.scr[i].page) + ')</span></button></div>').join('') + '</div>' : '') +
     (r.n ? '<div class="sec"><div class="sech">Notes</div><div style="font-size:13.5px;white-space:pre-line">' + hl(r.n) + '</div></div>' : '') +
     (r.ocr ? '<div class="note">Read by OCR from a scanned page. Check the value on the page before you use it.</div>' : '') +
     refs(r.ref) + '</div>';

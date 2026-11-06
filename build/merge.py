@@ -209,6 +209,19 @@ def merge_io(rows):
     for y in out: y.pop('src', None)
     return out
 
+# per-cylinder ranges that were kept as one key (e.g. TE1121-25A = TE1121A..TE1125A): add one alias tag per cylinder
+RANGE = re.compile(r'^([A-Z]{1,4}\d{2})(\d)(\d)-(\d)(\d)([A-Z]\d?)$')
+for s in SIG.values():
+    m = RANGE.match(s['k'])
+    if not m: continue
+    a, b = int(m.group(2) + m.group(3)), int(m.group(4) + m.group(5))
+    if b - a == 4 and a % 20 == 1:  # 01-05, 21-25, 41-45 ...
+        for n in range(a, b + 1):
+            alias = f"{m.group(1)}{n:02d}{m.group(6)}"
+            if alias not in s['t']: s['t'].append(alias)
+        s.setdefault('cy', 'all (1-5)')
+        s['_notes'].append(f"Printed as a range for cylinders 1-5: the per-cylinder tags are {m.group(1)}{a:02d}{m.group(6)} to {m.group(1)}{b:02d}{m.group(6)}.")
+
 for s in SIG.values():
     s['io'] = merge_io(s['io'])
     if s['_desc']:
