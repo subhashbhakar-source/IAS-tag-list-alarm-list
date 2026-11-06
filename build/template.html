@@ -148,6 +148,70 @@ footer{color:var(--muted);font-size:11.5px;text-align:center;padding-block:8px 3
 .lockbox input{width:100%;font-size:18px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);letter-spacing:.06em;-webkit-appearance:none;appearance:none}
 .lockbox button{width:100%;margin-top:10px;font-size:17px;padding:12px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-ink);font-weight:600}
 .lockbox .err{color:var(--err);min-height:20px}
+/* learning aids: help tabs, decoder, plain English, explanations, glossary sheet, limits bar, action chain */
+:root{--o:#a33f00;--o-bg:#fde3d3}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--o:#ffa16b;--o-bg:#3b2414}}
+:root[data-theme="dark"]{--o:#ffa16b;--o-bg:#3b2414}
+.helprow{display:flex;gap:6px;margin-top:7px;overflow-x:auto;scrollbar-width:none;align-items:center;padding-bottom:2px}
+.helprow::-webkit-scrollbar{display:none}
+.helprow .hlab{flex:none;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-right:1px}
+.helprow button{flex:none;border:1px dashed var(--muted);background:transparent;color:var(--ink);border-radius:8px;padding:5px 9px;font-size:13px}
+.helprow button[aria-pressed="true"]{border:1px solid var(--l);background:var(--l-bg);color:var(--l);font-weight:650}
+.helprow button[aria-pressed="true"]::before{content:"\2713\00a0"}
+.helprow #glossbtn{border-style:solid;border-color:var(--line);color:var(--accent)}
+.learn{margin-top:10px;padding:9px 11px 10px;border-radius:10px;background:var(--soft);border:1px solid var(--line);border-left:3px solid var(--l);font-size:14px;line-height:1.45}
+.learn h3{margin:0 0 5px;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--l);font-weight:800}
+.learn p{margin:5px 0 0}
+.learn p:first-of-type{margin-top:0}
+.learn code{font:600 12.5px var(--mono)}
+.pe{font-size:14px;margin-top:4px}
+.pe span{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--l);font-weight:800;margin-right:6px}
+.dec{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 10px;align-items:baseline;font-size:13.5px}
+.dec code{font:700 12.5px var(--mono);background:var(--chip);border-radius:6px;padding:2px 6px;white-space:nowrap;justify-self:start}
+.dec .tag{margin-left:4px;vertical-align:baseline}
+.dect{font:700 13px var(--mono);margin:10px 0 5px;word-break:break-all}
+.learn h3 + .dect{margin-top:0}
+.decf{font:400 11.5px var(--sans);color:var(--muted);margin-left:6px}
+.gl{border:0;background:none;padding:0;margin:0;color:inherit;font:inherit;letter-spacing:inherit;text-transform:inherit;text-decoration:underline dotted;text-decoration-thickness:1.5px;text-underline-offset:3px;cursor:help;text-align:inherit}
+.q{border:1px solid var(--line);background:var(--card);color:var(--accent);border-radius:50%;width:20px;height:20px;font:700 11.5px/1 var(--sans);padding:0;margin-left:6px;vertical-align:middle;text-transform:none;letter-spacing:0}
+.lbar{margin:0}
+.ltrack{position:relative;height:10px;border-radius:5px;margin:24px 2px;background:var(--soft);box-shadow:inset 0 0 0 1px var(--line)}
+.ltrack .lz{position:absolute;top:0;bottom:0}
+.lz.ok{background:var(--l);opacity:.35}
+.lz.w{background:var(--a);opacity:.6}
+.lz.d{background:var(--s);opacity:.75}
+.lmk{position:absolute;top:-5px;bottom:-5px;width:2px;margin-left:-1px;background:var(--ink)}
+.lmk span{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;font:600 11.5px/1.2 var(--mono);color:var(--ink);font-variant-numeric:tabular-nums}
+.lmk.up span{bottom:17px}
+.lmk.dn span{top:17px}
+.lmk.al span{left:0;transform:none}
+.lmk.ar span{left:auto;right:0;transform:none}
+.lends{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.lkey{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--muted);margin-top:6px}
+.lkey span{display:inline-flex;align-items:center;gap:5px}
+.lkey i{display:inline-block;width:12px;height:8px;border-radius:2px}
+.lkey b{color:var(--ink);font-weight:650}
+.act{display:inline-flex;flex-wrap:wrap;gap:4px;align-items:center}
+.act .st{font:600 12.5px/1.25 var(--sans);padding:3px 7px;border-radius:6px;background:var(--x-bg);color:var(--x)}
+.act .sv0{background:var(--c-bg);color:var(--c)}
+.act .sv1{background:var(--a-bg);color:var(--a)}
+.act .sv2{background:var(--o-bg);color:var(--o)}
+.act .sv3{background:var(--s-bg);color:var(--s)}
+.act .sep{color:var(--muted);font-weight:700}
+#sheet{position:fixed;inset:0;z-index:20;background:var(--scrim);display:flex;align-items:flex-end;justify-content:center}
+.sheetbox{background:var(--card);color:var(--ink);width:100%;max-width:560px;max-height:78vh;overflow:auto;border-radius:16px 16px 0 0;padding:0 16px calc(env(safe-area-inset-bottom, 0px) + 18px);box-shadow:0 -4px 24px rgba(0,0,0,.25)}
+.sheethead{display:flex;justify-content:space-between;align-items:center;gap:8px;position:sticky;top:0;background:var(--card);padding-top:8px}
+.sheethead h2{font-size:17px;margin:0;text-wrap:balance}
+#sheetx{flex:none;border:0;background:none;font-size:28px;line-height:1;color:var(--muted);width:44px;height:44px}
+.sheetbody{font-size:15px;line-height:1.5}
+.sheetbody p{margin:6px 0 10px}
+.sheetbody .src{font-size:12px;color:var(--muted)}
+.glist{margin:0}
+.glist dt{font-weight:700;margin-top:10px;font-size:14px}
+.glist dd{margin:2px 0 0;font-size:14px;line-height:1.45}
+.abbr{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:3px 14px;font-size:13px}
+.abbr code{font:700 12.5px var(--mono)}
+.empty .legend b{color:var(--ink)}
 @media (prefers-reduced-motion: reduce){#toast{transition:none}}
 </style>
 
@@ -189,6 +253,14 @@ footer{color:var(--muted);font-size:11.5px;text-align:center;padding-block:8px 3
       <button data-e="P" aria-pressed="false">ME Port</button>
       <button data-e="S" aria-pressed="false">ME Stbd</button>
     </div>
+    <div class="helprow" role="group" aria-label="Learning help">
+      <span class="hlab">Help</span>
+      <button data-h="dec" aria-pressed="false">Decode tag</button>
+      <button data-h="pe" aria-pressed="false">Plain English</button>
+      <button data-h="wim" aria-pressed="false">What it means</button>
+      <button data-h="ew" aria-pressed="false">Explain words</button>
+      <button id="glossbtn">Glossary</button>
+    </div>
     <div id="status" aria-live="polite"></div>
   </header>
   <main id="out"></main>
@@ -196,8 +268,12 @@ footer{color:var(--muted);font-size:11.5px;text-align:center;padding-block:8px 3
   <footer id="foot"></footer>
 </div>
 <div id="toast"></div>
+<div id="sheet" hidden><div class="sheetbox" role="dialog" aria-modal="true" aria-labelledby="sheett"><div class="sheethead"><h2 id="sheett"></h2><button id="sheetx" aria-label="Close">&times;</button></div><div id="sheetb" class="sheetbody"></div></div></div>
 
 <script id="data" type="application/json">__ENCRYPTED_DATA__</script>
+<script>
+__LEARN_JS__
+</script>
 <script>
 (async function(){
 "use strict";
@@ -240,6 +316,7 @@ if (!D) D = await unlock();
 $('app').hidden = false;
 
 // ---------------- data ----------------
+const GUIDE = LEARN.prep(D);   // also turns "&apos;" etc. in the source text back into characters; links guides to tags
 const SYS = D.sys, DOCS = D.docs;
 const ROLE = {A:'Alarm (IAS)', S:'Safety', C:'Control', L:'Local', I:'Indication', X:'Equipment'};
 const ROLELONG = {A:'Alarm & monitoring system (IAS / AMS)', S:'Safety system (shutdown, slowdown, trip, ESD)', C:'Control system (WECS, AutoChief, IAS control)', L:'Local gauge or local panel', I:'Remote indication only', X:'Equipment or valve tag (no alarm function stated in the manual)'};
@@ -258,7 +335,8 @@ const squash = s => norm(s).replace(/[^a-z0-9]/g, '');
 function txt(v){ if (v == null) return ''; if (Array.isArray(v)) return v.map(txt).join(' '); if (typeof v === 'object') return Object.values(v).map(txt).join(' '); return String(v); }
 for (const r of rows){
   let parts;
-  if (r.T === 'sig') parts = [r.k, r.t, r.d, SYS[r.s], r.eq, r.st, r.sg, r.rg, r.sp, r.ac, r.dl, r.from, r.to, r.box, r.pn, r.n, txt(r.lim), (r.io || []).map(x => [x.tag, x.d, 'dpu ' + x.dpu, x.mod, x.cab, 'ch ' + x.ch, x.term, x.fc, x.sp, x.n].join(' ')).join(' '), (r.cf || []).join(' '), (r.rl || []).map(x => ROLE[x]).join(' ')];
+  if (r.T === 'sig') r.pd = D.sig[r.i].pd = LEARN.plain(r.d, r);   // plain-English description, also searchable
+  if (r.T === 'sig') parts = [r.k, r.t, r.d, r.pd, SYS[r.s], r.eq, r.st, r.sg, r.rg, r.sp, r.ac, r.dl, r.from, r.to, r.box, r.pn, r.n, txt(r.lim), (r.io || []).map(x => [x.tag, x.d, 'dpu ' + x.dpu, x.mod, x.cab, 'ch ' + x.ch, x.term, x.fc, x.sp, x.n].join(' ')).join(' '), (r.cf || []).join(' '), (r.rl || []).map(x => ROLE[x]).join(' ')];
   else if (r.T === 'grp') parts = [r.title, SYS[r.s], r.note, r.sig.map(i => D.sig[i].k + ' ' + (D.sig[i].t || []).join(' ')).join(' ')];
   else if (r.T === 'fn') parts = [r.title, SYS[r.s], r.eq, txt(r.items), txt(r.al), (r.tags || []).join(' '), r.n];
   else if (r.T === 'scr') parts = [r.title, r.sec, 'mimic screen page ' + r.page, (r.tags || []).join(' '), (r.sys || []).map(s => SYS[s]).join(' ')];
@@ -273,6 +351,19 @@ $('count').textContent = rows.length.toLocaleString() + ' entries';
 // ---------------- helpers ----------------
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 let TOKS = [];
+// ---------------- help tabs (Decode tag, Plain English, What it means, Explain words) ----------------
+const HELPKEY = 'ias-tag-finder-help';
+const HELP = (() => { try { return Object.assign({dec:0, pe:0, wim:0, ew:0}, JSON.parse(load(HELPKEY) || '{}')); } catch(_) { return {dec:0, pe:0, wim:0, ew:0}; } })();
+const on = k => !!HELP[k];
+// text with glossary terms made tappable (only when "Explain words" is on)
+function gx(text){
+  if (!on('ew') || text == null || text === '') return hl(text);
+  return LEARN.terms(text).map(x => x.k ? '<button class="gl" data-gl="' + x.k + '">' + hl(x.t) + '</button>' : hl(x.t)).join('');
+}
+const lab = (l, k) => on('ew') && k ? '<button class="gl" data-gl="' + k + '">' + l + '</button>' : l;
+const sech = (t, k) => '<div class="sech">' + t + (on('ew') && k ? '<button class="q" data-gl="' + k + '" aria-label="What is this?">?</button>' : '') + '</div>';
+const FKEY = {'Sensor':'FSENSOR', 'Signal':'FSIGNAL', 'Range':'FRANGE', 'Limits':'LIMITS', 'Set point':'SETPOINT', 'Action':'FACTION', 'Delay':'DELAY', 'Alarm group':'AGROUP', 'Part no.':'FPART'};
+const listJoin = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
 function hl(text){
   const s = esc(text);
   if (!TOKS.length) return s;
@@ -280,7 +371,7 @@ function hl(text){
   return s.replace(re, '<mark>$1</mark>');
 }
 const roleBadge = (r, extra) => '<span class="role r' + r + '" title="' + esc(ROLELONG[r] || '') + '">' + esc(ROLE[r] || r) + (extra ? ' ' + extra : '') + '</span>';
-const field = (l, h) => h ? '<div class="fl">' + l + '</div><div class="fv">' + h + '</div>' : '';
+const field = (l, h) => h ? '<div class="fl">' + lab(l, FKEY[l]) + '</div><div class="fv">' + h + '</div>' : '';
 const go = (tag, lbl, cls) => '<button class="tag go' + (cls ? ' ' + cls : '') + '" data-go="' + esc(tag) + '">' + (lbl ? '<span class="lbl">' + esc(lbl) + '</span>' : '') + hl(tag) + '</button>';
 const copyChip = (tag, lbl) => '<button class="tag" data-copy="' + esc(tag) + '">' + (lbl ? '<span class="lbl">' + esc(lbl) + '</span>' : '') + hl(tag) + '</button>';
 function limits(l){
@@ -299,31 +390,31 @@ function ioRows(r){
   let io = r.io || [];
   if (engine) io = io.filter(x => !x.e || x.e === engine);
   if (!io.length) return '';
-  return '<div class="sec"><div class="sech">IAS / AutoChief I/O address' + (io.length > 1 ? 'es' : '') + '</div>' +
+  return '<div class="sec">' + sech('IAS / AutoChief I/O address' + (io.length > 1 ? 'es' : ''), 'IOADDR') +
     io.map(x => '<div class="iorow"><div class="iohead">' + (x.e ? '<span class="eng">' + (x.e === 'P' ? 'Port' : 'Stbd') + '</span>' : '') + '<code>' + hl(x.tag) + '</code>' + (x.fc ? '<span class="sub">' + hl(x.fc) + '</span>' : '') + '</div>' +
-      '<div class="ioaddr">' + [x.dpu ? 'DPU <b>' + hl(x.dpu) + '</b>' + (x.mod ? ' ' + hl(x.mod) : '') : (x.mod ? hl(x.mod) : ''), x.ch ? (x.ch.charAt(0) === '#' ? 'yard list row <b>' + hl(x.ch.slice(1)) + '</b>' : 'ch <b>' + hl(x.ch) + '</b>') : '', x.term ? (x.ch && x.ch.charAt(0) === '#' ? 'point <b>' : 'terminal <b>') + hl(x.term) + '</b>' : '', x.cab ? 'cabinet ' + hl(x.cab) : ''].filter(Boolean).join(' · ') + '</div>' +
+      '<div class="ioaddr">' + [x.dpu ? lab('DPU', 'DPU') + ' <b>' + hl(x.dpu) + '</b>' + (x.mod ? ' ' + gx(x.mod) : '') : (x.mod ? gx(x.mod) : ''), x.ch ? (x.ch.charAt(0) === '#' ? lab('yard list row', 'YARDROW') + ' <b>' + hl(x.ch.slice(1)) + '</b>' : lab('ch', 'CHANNEL') + ' <b>' + hl(x.ch) + '</b>') : '', x.term ? (x.ch && x.ch.charAt(0) === '#' ? lab('point', 'PROMEAS') + ' <b>' : lab('terminal', 'TERMINAL') + ' <b>') + hl(x.term) + '</b>' : '', x.cab ? lab('cabinet', 'CABINET') + ' ' + hl(x.cab) : ''].filter(Boolean).join(' · ') + '</div>' +
       (x.d && norm(x.d) !== norm(r.d) ? '<div class="sub">' + hl(x.d) + '</div>' : '') +
-      (x.lim ? '<div>' + limits(x.lim) + '</div>' : '') + (x.sp ? '<div class="sub">' + hl(x.sp) + '</div>' : '') +
-      (x.ag ? '<div class="sub">Alarm group ' + hl(x.ag) + '</div>' : '') + (x.n ? '<div class="sub">' + hl(x.n) + '</div>' : '') + '</div>').join('') + '</div>';
+      (x.lim ? '<div>' + limits(x.lim) + '</div>' : '') + (x.sp ? '<div class="sub">' + gx(x.sp) + '</div>' : '') +
+      (x.ag ? '<div class="sub">' + lab('Alarm group', 'AGROUP') + ' ' + gx(x.ag) + '</div>' : '') + (x.n ? '<div class="sub">' + hl(x.n) + '</div>' : '') + '</div>').join('') + '</div>';
 }
 function signalPath(r){
   const nodes = [];
   if (r.from) nodes.push(['From', hl(r.from)]);
-  if (r.box) nodes.push(['Engine box / unit', '<code>' + hl(r.box) + '</code>']);
+  if (r.box) nodes.push([lab('Engine box / unit', 'BOX'), '<code>' + hl(r.box) + '</code>']);
   const io = (r.io || []).filter(x => !engine || !x.e || x.e === engine);
   const dp = [...new Set(io.filter(x => x.dpu).map(x => (x.e ? x.e + ': ' : '') + 'DPU ' + x.dpu + (x.mod ? ' ' + x.mod : '') + (x.ch ? ' ch ' + x.ch : '') + (x.term ? ' · ' + x.term : '')))];
-  if (dp.length) nodes.push(['Kongsberg I/O', dp.map(x => '<code>' + hl(x) + '</code>').join('<br>')]);
+  if (dp.length) nodes.push([lab('Kongsberg I/O', 'IOADDR'), dp.map(x => '<code>' + hl(x) + '</code>').join('<br>')]);
   const cab = [...new Set(io.map(x => x.cab).filter(Boolean))];
-  if (cab.length) nodes.push(['Cabinet', hl(cab.join(', '))]);
+  if (cab.length) nodes.push([lab('Cabinet', 'CABINET'), hl(cab.join(', '))]);
   if (r.to) nodes.push(['To', hl(r.to)]);
   if (nodes.length < 2) return '';
-  return '<div class="sec"><div class="sech">Signal path</div><div class="path">' + nodes.map((n, i) => (i ? '<span class="arrow" aria-hidden="true">&#8594;</span>' : '') + '<div class="node"><b>' + n[0] + '</b>' + n[1] + '</div>').join('') + '</div></div>';
+  return '<div class="sec">' + sech('Signal path', 'PATH') + '<div class="path">' + nodes.map((n, i) => (i ? '<span class="arrow" aria-hidden="true">&#8594;</span>' : '') + '<div class="node"><b>' + n[0] + '</b>' + n[1] + '</div>').join('') + '</div></div>';
 }
 function groupSection(r){
   if (r.g == null) return '';
   const g = D.grp[r.g];
   const sibs = g.sig.filter(i => D.sig[i].k !== r.k);
-  return '<div class="sec"><div class="sech">Same measurement — ' + esc(g.title) + '</div>' + countPills(g) +
+  return '<div class="sec">' + sech('Same measurement — ' + esc(g.title), 'SAMEM') + countPills(g) +
     (sibs.length ? '<div class="chips">' + sibs.map(i => { const s = D.sig[i]; return '<span style="display:inline-flex;gap:4px;align-items:center">' + go(s.k, (s.rl || []).map(x => ROLE[x]).join(' / ')) + '</span>'; }).join('') + '</div>' : '') + '</div>';
 }
 const SYSSCR = new Map();
@@ -341,23 +432,87 @@ function countPills(g){
 }
 
 // ---------------- cards ----------------
+// "Decode tag" box: each different tag form of this signal, split into its parts
+function decodeBox(r, tags){
+  const list = [r.k];
+  const io = (r.io || []).filter(x => !engine || !x.e || x.e === engine).map(x => x.tag);
+  for (const t of tags.concat(io)) if (t && !list.includes(t)) list.push(t);
+  const seen = new Set(), out = [];
+  for (const t of list){
+    const d = LEARN.decode(t, r, x => BYKEY.has(x));
+    const key = d.fam + '|' + t.replace(/^[PS] /, '').replace(/^ME[PS](?=-)/, 'ME').replace(/^\d(?=\D)/, '#');
+    if (seen.has(key)) continue;
+    seen.add(key); out.push(d);
+    if (out.length >= 3) break;
+  }
+  return '<div class="learn"><h3>Decode tag</h3>' + out.map(d => '<div class="dect">' + esc(d.tag) + (d.fam ? '<span class="decf">' + esc(d.fam) + '</span>' : '') + '</div>' +
+    (d.rows.length ? '<div class="dec">' + d.rows.map(x => '<code>' + esc(x[0]) + '</code><span>' + esc(x[1]) + (x[2] && x[2] !== r.k ? go(x[2], '', 'small') : '') + '</span>').join('') + '</div>'
+      : '<div class="sub">No fixed pattern to decode — the description says what it is.</div>')).join('') + '</div>';
+}
+// "What it means" box: the card's fields said in sentences
+const ROLEUSE = {A:'the alarm system (IAS)', S:'the safety system (shutdown / slowdown)', C:'the control system', L:'a local gauge on the spot', I:'remote indication only'};
+function explainBox(r, guides){
+  const P = [];
+  const what = r.pd || r.d;
+  if (what) P.push('<b>' + esc(what) + '</b>');
+  const uses = (r.rl || []).map(x => ROLEUSE[x]).filter(Boolean);
+  if (uses.length) P.push('Used by ' + listJoin(uses) + '.');
+  const io = r.io || [];
+  const Pt = io.find(x => x.e === 'P'), St = io.find(x => x.e === 'S');
+  if (Pt && St) P.push('Both main engines have it: Port <code>' + esc(Pt.tag) + '</code>, Stbd <code>' + esc(St.tag) + '</code>.');
+  else if (r.e === 'P' || r.e === 'S') P.push('It belongs to the ' + (r.e === 'P' ? 'Port' : 'Stbd') + ' main engine.');
+  const sp = LEARN.signalPlain(r.sg);
+  if (r.st || sp) P.push((r.st ? 'Instrument: ' + esc(r.st.charAt(0).toLowerCase() + r.st.slice(1)) + (sp ? ', sending ' + esc(sp) : '') : 'Signal: ' + esc(sp)) + '.');
+  if (r.lim){
+    const parts = ['LL', 'L', 'H', 'HH'].filter(k => r.lim[k] != null).map(k => {
+      const v = String(r.lim[k]);
+      return (/^[<>≤≥＜]/.test(v) ? '' : k[0] === 'L' ? 'below ' : 'above ') + v + ' (' + LEARN.LIMNAME[k] + ', ' + k + ')';
+    });
+    if (parts.length) P.push('Limits: ' + esc(listJoin(parts)) + (r.rg ? '. Measuring range ' + esc(r.rg) : '') + '.');
+  }
+  if (r.ac) P.push('What happens: ' + esc(LEARN.actionWords(r.ac)) + (r.dl ? ' (delay: ' + esc(r.dl) + ')' : '') + '.');
+  const m = String(r.sp || '').match(/\b(SLD|SHD)\s*=\s*(LL|L|HH|H)\b/);
+  if (m) P.push('The ' + (m[1] === 'SLD' ? 'slowdown' : 'shutdown') + ' acts at the ' + m[2] + ' limit (set point “' + esc(r.sp) + '”).');
+  const route = [];
+  if (r.from) route.push(r.from);
+  if (r.box) route.push('terminal box ' + r.box);
+  const dio = io.filter(x => x.dpu && (!engine || !x.e || x.e === engine));
+  if (dio.length){
+    const x = dio[0];
+    route.push('DPU ' + x.dpu + (x.mod ? ' (' + x.mod + ')' : '') + (x.ch ? ', channel ' + x.ch : '') + (x.term ? ', terminals ' + x.term : '') + (x.cab ? ', cabinet ' + x.cab : '') +
+      (x.e && dio.some(y => y.e && y.e !== x.e) ? ' for the ' + (x.e === 'P' ? 'Port' : 'Stbd') + ' ME (the other engine has its own)' : ''));
+  }
+  if (r.to) route.push(r.to);
+  if (route.length >= 2) P.push('Signal route: ' + esc(route.join(' → ')) + '.');
+  if (r.g != null) P.push(D.grp[r.g].sig.length + ' tags measure the same thing — compare them under “Same measurement” to check a suspect reading.');
+  if (guides.length) P.push(guides.length + (guides.length === 1 ? ' guide below says' : ' guides below say') + ' what to do.');
+  if (r.ocr) P.push('Some values were read by OCR from a scanned page — check them on the source page.');
+  return '<div class="learn"><h3>What it means</h3>' + P.map(p => '<p>' + p + '</p>').join('') + '</div>';
+}
 function cardSig(r, exact){
   const tags = r.t && r.t.length ? r.t : [r.k];
+  const guides = GUIDE.bySig.get(r.i != null ? r.i : BYKEY.get(r.k)) || [];
+  const bar = LEARN.limitBar(r);
   return '<div class="card' + (exact ? ' exact' : '') + '">' +
     '<div class="kind">' + (r.rl || ['X']).map(x => roleBadge(x)).join('') + '<span>' + sysLine(r) + '</span>' + (r.e ? '<span>ME ' + (r.e === 'P' ? 'Port' : r.e === 'S' ? 'Stbd' : 'Port + Stbd') + '</span>' : '') + (r.cy ? '<span>Cyl. ' + esc(r.cy) + '</span>' : '') + '</div>' +
     '<div class="chips" style="margin-top:2px">' + copyChip(r.k, 'Tag') + tags.filter(t => t !== r.k).map(t => copyChip(t, 'As printed')).join('') + '</div>' +
+    (on('dec') ? decodeBox(r, tags) : '') +
     '<div class="desc">' + hl(r.d) + '</div>' +
+    (on('pe') && r.pd && !LEARN.same(r.pd, r.d) ? '<div class="pe"><span>Plain</span>' + hl(r.pd) + '</div>' : '') +
+    (on('wim') ? explainBox(r, guides) : '') +
     '<div class="fields">' +
-      field('Sensor', hl(r.st)) + field('Signal', hl(r.sg)) + field('Range', hl(r.rg) + (r.u && !(r.rg || '').includes(r.u) ? ' <span class="sub">' + esc(r.u) + '</span>' : '')) +
-      field('Limits', limits(r.lim)) + field('Set point', hl(r.sp)) + field('Action', hl(r.ac)) + field('Delay', hl(r.dl)) + field('Alarm group', hl(r.ag)) + field('Part no.', hl(r.pn)) +
+      field('Sensor', gx(r.st)) + field('Signal', gx(r.sg)) + field('Range', hl(r.rg) + (r.u && !(r.rg || '').includes(r.u) ? ' <span class="sub">' + esc(r.u) + '</span>' : '')) +
+      field('Limits', limits(r.lim)) + field('Set point', gx(r.sp)) + field('Action', LEARN.actionChain(r.ac, gx)) + field('Delay', gx(r.dl)) + field('Alarm group', gx(r.ag)) + field('Part no.', hl(r.pn)) +
     '</div>' +
+    (bar ? '<div class="sec">' + sech('Limits on the measuring range', 'LIMITS') + bar + '</div>' : '') +
     signalPath(r) + ioRows(r) +
-    (r.cf && r.cf.length ? '<div class="sec"><div class="sech">AutoChief safety configuration</div>' + r.cf.filter(c => !engine || c.indexOf(engine === 'P' ? 'Stbd:' : 'Port:') !== 0).map(c => '<div style="font-size:13.5px;margin:3px 0">' + hl(c) + '</div>').join('') + '</div>' : '') +
+    (r.cf && r.cf.length ? '<div class="sec">' + sech('AutoChief safety configuration', 'CFG') + r.cf.filter(c => !engine || c.indexOf(engine === 'P' ? 'Stbd:' : 'Port:') !== 0).map(c => '<div style="font-size:13.5px;margin:3px 0">' + gx(c) + '</div>').join('') + '</div>' : '') +
     groupSection(r) +
-    (r.rel && r.rel.length ? '<div class="sec"><div class="sech">Follow-up tags</div><div class="chips">' + r.rel.map(t => go(t, '', 'small')).join('') + '</div></div>' : '') +
-    (r.fn && r.fn.length ? '<div class="sec"><div class="sech">Logic that uses it</div>' + r.fn.map(i => '<div><button class="link" data-fn="' + i + '">' + esc(D.fn[i].title) + ' &#8594;</button></div>').join('') + '</div>' : '') +
-    (r.scr && r.scr.length ? '<div class="sec"><div class="sech">Shown on IAS screen</div>' + r.scr.map(i => '<div><button class="link" data-scr="' + i + '">' + esc(D.scr[i].title) + ' <span class="sub">(mimic book p.' + esc(D.scr[i].page) + ')</span></button></div>').join('') + '</div>' :
-      sysScreens(r).length ? '<div class="sec"><div class="sech">IAS screens for this system</div>' + sysScreens(r).map(i => '<div><button class="link" data-scr="' + i + '">' + esc(D.scr[i].title) + ' <span class="sub">(p.' + esc(D.scr[i].page) + ')</span></button></div>').join('') + '</div>' : '') +
+    (guides.length ? '<div class="sec">' + sech('Guides', 'GUIDES') + guides.slice(0, 8).map(i => '<div><button class="link" data-how="' + i + '">' + esc(D.how[i].title) + ' &#8594;</button></div>').join('') + '</div>' : '') +
+    (r.rel && r.rel.length ? '<div class="sec">' + sech('Follow-up tags', 'FOLLOW') + '<div class="chips">' + r.rel.map(t => go(t, '', 'small')).join('') + '</div></div>' : '') +
+    (r.fn && r.fn.length ? '<div class="sec">' + sech('Logic that uses it', 'LOGIC') + r.fn.map(i => '<div><button class="link" data-fn="' + i + '">' + esc(D.fn[i].title) + ' &#8594;</button></div>').join('') + '</div>' : '') +
+    (r.scr && r.scr.length ? '<div class="sec">' + sech('Shown on IAS screen', 'SCREEN') + r.scr.map(i => '<div><button class="link" data-scr="' + i + '">' + esc(D.scr[i].title) + ' <span class="sub">(mimic book p.' + esc(D.scr[i].page) + ')</span></button></div>').join('') + '</div>' :
+      sysScreens(r).length ? '<div class="sec">' + sech('IAS screens for this system', 'SCREEN') + sysScreens(r).map(i => '<div><button class="link" data-scr="' + i + '">' + esc(D.scr[i].title) + ' <span class="sub">(p.' + esc(D.scr[i].page) + ')</span></button></div>').join('') + '</div>' : '') +
     (r.n ? '<div class="sec"><div class="sech">Notes</div><div style="font-size:13.5px;white-space:pre-line">' + hl(r.n) + '</div></div>' : '') +
     (r.ocr ? '<div class="note">Read by OCR from a scanned page. Check the value on the page before you use it.</div>' : '') +
     refs(r.ref) + '</div>';
@@ -368,6 +523,7 @@ function cardGrp(r, exact){
     (r.note ? '<div class="sub" style="margin-top:6px">' + hl(r.note) + '</div>' : '') +
     '<div class="sec">' + r.sig.map(i => { const s = D.sig[i];
       return '<div class="srow"><div>' + go(s.k) + '</div><div class="meta">' + (s.rl || ['X']).map(x => roleBadge(x)).join(' ') + ' ' + hl(s.d) +
+        (on('pe') && s.pd && !LEARN.same(s.pd, s.d) ? '<div class="pe"><span>Plain</span>' + hl(s.pd) + '</div>' : '') +
         (s.sp || s.ac ? '<div class="sub">' + hl([s.ac, s.sp, s.dl].filter(Boolean).join(' · ')) + '</div>' : '') +
         (s.lim ? '<div>' + limits(s.lim) + '</div>' : '') + (s.rg ? '<div class="sub">' + hl(s.st || '') + (s.st ? ' · ' : '') + hl(s.rg) + '</div>' : '') + '</div></div>'; }).join('') + '</div></div>';
 }
@@ -401,8 +557,27 @@ function cardCab(r, exact){
     '<div class="fields">' + field('Type', hl(r.type)) + field('Signal', hl(r.sig)) + field('From', hl(r.from)) + field('To', hl(r.to)) + field('Notes', hl(r.n)) + '</div>' + refs(r.ref) + '</div>';
 }
 function cardHow(r, exact){
+  const tg = (GUIDE.byGuide.get(r.i) || []).map(i => D.sig[i].k);
   return '<div class="card' + (exact ? ' exact' : '') + '"><div class="kind"><span>Guide</span><span>' + esc(SYS[r.s] || '') + '</span></div>' +
-    '<div class="ttl">' + hl(r.title) + '</div><ol class="steps">' + (r.steps || []).map(s => '<li>' + hl(s) + '</li>').join('') + '</ol>' + refs(r.ref) + '</div>';
+    '<div class="ttl">' + hl(r.title) + '</div><ol class="steps">' + (r.steps || []).map(s => '<li>' + hl(s) + '</li>').join('') + '</ol>' +
+    (tg.length ? '<div class="sec"><div class="sech">Tags in this guide</div><div class="chips">' + tg.slice(0, 40).map(t => go(t, '', 'small')).join('') + '</div></div>' : '') +
+    refs(r.ref) + '</div>';
+}
+// Glossary page: every explanation, the short forms used in descriptions, and Kongsberg's own lists
+function glossaryPage(){
+  const G = LEARN.GL;
+  const groups = LEARN.GLGROUPS.map(([title, keys]) => '<div class="sec"><div class="sech">' + esc(title) + '</div><dl class="glist">' +
+    keys.filter(k => G[k]).map(k => '<dt>' + esc(G[k][0]) + '</dt><dd>' + esc(G[k][1]) + '</dd>').join('') + '</dl></div>').join('');
+  const ab = Object.entries(LEARN.ABBR).filter(([k, v]) => v.toUpperCase() !== k).sort((a, b) => a[0].localeCompare(b[0]));
+  const abd = Object.entries(LEARN.ABBR_DOT).map(([k, v]) => [k + '.', v]);
+  const kg = D.how.map((h, i) => [h.title, i]).filter(x => /^Glossary/.test(x[0]));
+  return '<div class="card"><div class="kind"><span>Glossary</span></div><div class="ttl">Words, short forms and parts of a card</div>' +
+    '<div class="sub" style="margin-top:4px">Switch on “Explain words” in the Help row and these words become underlined on the cards — tap one to see its explanation.</div>' +
+    groups +
+    '<div class="sec"><div class="sech">Short forms in the descriptions (Plain English writes these out)</div><div class="abbr">' +
+    ab.concat(abd).sort((a, b) => a[0].localeCompare(b[0])).map(([k, v]) => '<div><code>' + esc(k) + '</code> ' + esc(v) + '</div>').join('') + '</div></div>' +
+    (kg.length ? '<div class="sec"><div class="sech">Kongsberg’s own abbreviation lists</div>' + kg.map(x => '<div><button class="link" data-how="' + x[1] + '">' + esc(x[0]) + ' &#8594;</button></div>').join('') + '</div>' : '') +
+    '</div>';
 }
 function card(r, exact){
   if (r.T === 'sig') return cardSig(r, exact);
@@ -442,6 +617,7 @@ function search(q){
       const i = r.hay.indexOf(t);
       if (i >= 0) score += (i === 0 ? 4 : 1);
       else if (st.length >= 2 && r.hayS.indexOf(st) >= 0) score += 2;
+      else if (LEARN.synonyms(t).some(a => r.hay.indexOf(a) >= 0)) score += 1;
       else { ok = false; break; }
     }
     if (!ok) continue;
@@ -469,13 +645,18 @@ function home(){
   const sysl = SYS.map((n, i) => [n, i, counts.get(i) || 0]).filter(x => x[2]).sort((a, b) => b[2] - a[2]);
   return '<div class="empty">' +
     '<p><b style="color:var(--ink)">Search ' + rows.length.toLocaleString() + ' tags, alarms, set points, logic and IAS screens.</b> Words can be in any order. Tap a tag to copy it; tap a tag with an arrow to jump to it.</p>' +
-    '<div class="ex">' + D.examples.map(x => '<button data-ex="' + esc(x) + '">' + esc(x) + '</button>').join('') + '</div>' +
+    '<div class="ex">' + D.examples.concat(['turbocharger exhaust temperature']).map(x => '<button data-ex="' + esc(x) + '">' + esc(x) + '</button>').join('') + '</div>' +
+    '<h2>Learning help</h2><p>Switch these on in the <b style="color:var(--ink)">Help</b> row under the search box when you need them. They stay as you leave them on this device.</p>' +
+    '<div class="legend"><b>Decode tag</b><span>splits each tag into its parts and says what each part means</span><b>Plain English</b><span>writes the short yard description out in full words</span><b>What it means</b><span>a few sentences on what the signal does, its limits and where its wire goes</span><b>Explain words</b><span>underlines terms such as DPU, 4-20 mA or HH — tap one for a short explanation</span></div>' +
+    '<p>You can also search in plain words, for example <i>turbocharger exhaust temperature</i>. <button class="link" data-gloss="1" style="padding:0">Open the glossary &#8594;</button></p>' +
     '<h2>What the colours mean</h2><div class="legend">' + ['A','S','C','L','I'].map(k => roleBadge(k) + '<span>' + esc(ROLELONG[k]) + '</span>').join('') + '</div>' +
     '<p>On WinGD engine tags the last letter tells you the same thing: <b style="color:var(--ink)">A</b> alarm system, <b style="color:var(--ink)">S</b> safety system, <b style="color:var(--ink)">C</b> control system, <b style="color:var(--ink)">L / M</b> local. Kongsberg tags start with <b style="color:var(--ink)">P</b> (Port ME) or <b style="color:var(--ink)">S</b> (Stbd ME).</p>' +
     '<h2>Browse by system</h2><div class="syslist">' + sysl.map(x => '<button data-sys="' + x[1] + '">' + esc(x[0]) + '<span>' + x[2] + '</span></button>').join('') + '</div>' +
     '</div>';
 }
+let view = null;   // single item open (logic, screen, guide, glossary) or null for a result list
 function render(){
+  view = null;
   const q = $q.value.trim();
   $clr.hidden = !q && sysFilter == null;
   $('back').hidden = !hist.length;
@@ -492,14 +673,45 @@ function render(){
 }
 const hist = [];
 function navigate(q){ hist.push([$q.value, filter, sysFilter]); $q.value = q; sysFilter = null; setFilter('all'); shown = 40; render(); window.scrollTo(0, 0); }
-function openOne(kind, i){
-  hist.push([$q.value, filter, sysFilter]);
-  const r = kind === 'fn' ? Object.assign({T:'fn', i}, D.fn[i]) : Object.assign({T:'scr', i}, D.scr[i]);
+function openOne(kind, i, keep){
+  if (!keep) hist.push([$q.value, filter, sysFilter]);
+  view = [kind, i];
   $('back').hidden = false; TOKS = [];
-  $st.textContent = kind === 'fn' ? 'Logic' : 'IAS screen';
-  $out.innerHTML = kind === 'fn' ? cardFn(r, false, true) : cardScr(r, false);
-  window.scrollTo(0, 0);
+  if (kind === 'gloss'){ $st.textContent = 'Glossary'; $out.innerHTML = glossaryPage(); if (!keep) window.scrollTo(0, 0); return; }
+  const src = kind === 'fn' ? D.fn : kind === 'how' ? D.how : D.scr;
+  const r = Object.assign({T: kind, i}, src[i]);
+  $st.textContent = kind === 'fn' ? 'Logic' : kind === 'how' ? 'Guide' : 'IAS screen';
+  $out.innerHTML = kind === 'fn' ? cardFn(r, false, true) : kind === 'how' ? cardHow(r, false) : cardScr(r, false);
+  if (!keep) window.scrollTo(0, 0);
 }
+// help tabs
+function paintHelp(){ document.querySelectorAll('.helprow button[data-h]').forEach(b => b.setAttribute('aria-pressed', HELP[b.dataset.h] ? 'true' : 'false')); }
+function rerender(){ const y = window.scrollY; if (view) openOne(view[0], view[1], true); else render(); window.scrollTo(0, y); }
+document.querySelectorAll('.helprow button[data-h]').forEach(b => b.addEventListener('click', () => {
+  const k = b.dataset.h;
+  HELP[k] = HELP[k] ? 0 : 1;
+  save(HELPKEY, JSON.stringify(HELP));
+  paintHelp(); rerender();
+  toast(b.textContent.replace(/^\u2713\s*/, '') + (HELP[k] ? ' on' : ' off'));
+}));
+paintHelp();
+$('glossbtn').addEventListener('click', () => openOne('gloss', 0));
+// explanation sheet
+const SRC = {KT:'Name as given in the Kongsberg list of acronyms (AutoChief 600 manual 5314542/F, list 415950/E).', app:'Taken from the manuals in this app.'};
+function openSheet(k){
+  const g = LEARN.GL[k];
+  if (!g) return;
+  $('sheett').textContent = g[0];
+  $('sheetb').innerHTML = '<p>' + esc(g[1]) + '</p>' + (SRC[g[2]] ? '<p class="src">' + esc(SRC[g[2]]) + '</p>' : '') + '<p><button class="link" id="sheetall" style="padding:0">Open the full glossary &#8594;</button></p>';
+  $('sheet').hidden = false;
+  $('sheetx').focus();
+}
+function closeSheet(){ $('sheet').hidden = true; }
+$('sheet').addEventListener('click', e => {
+  if (e.target.id === 'sheet' || e.target.closest('#sheetx')){ closeSheet(); return; }
+  if (e.target.id === 'sheetall'){ closeSheet(); openOne('gloss', 0); }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('sheet').hidden) closeSheet(); });
 function setFilter(f){ filter = f; document.querySelectorAll('.filters button[data-f]').forEach(x => x.setAttribute('aria-pressed', x.dataset.f === f ? 'true' : 'false')); }
 function setEngine(e){ engine = e; document.querySelectorAll('.filters button[data-e]').forEach(x => x.setAttribute('aria-pressed', x.dataset.e === e ? 'true' : 'false')); save('ias-tag-finder-engine', e); }
 try { const e0 = load('ias-tag-finder-engine'); if (e0 === 'P' || e0 === 'S') setEngine(e0); } catch(_){}
@@ -513,6 +725,9 @@ document.querySelectorAll('.filters button[data-e]').forEach(b => b.addEventList
 $st.addEventListener('click', e => { if (e.target.id === 'clrsys'){ sysFilter = null; render(); } });
 $out.addEventListener('click', e => {
   if (e.target.id === 'more'){ shown += 80; render(); return; }
+  const gl = e.target.closest('[data-gl]'); if (gl){ openSheet(gl.dataset.gl); return; }
+  const hw = e.target.closest('[data-how]'); if (hw){ openOne('how', +hw.dataset.how); return; }
+  const gs = e.target.closest('[data-gloss]'); if (gs){ openOne('gloss', 0); return; }
   const ex = e.target.closest('[data-ex]'); if (ex){ navigate(ex.dataset.ex); return; }
   const sy = e.target.closest('[data-sys]'); if (sy){ hist.push([$q.value, filter, sysFilter]); sysFilter = +sy.dataset.sys; $q.value = ''; shown = 40; render(); window.scrollTo(0, 0); return; }
   const g = e.target.closest('[data-go]'); if (g){ navigate(g.dataset.go); return; }

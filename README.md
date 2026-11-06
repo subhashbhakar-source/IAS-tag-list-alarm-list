@@ -13,6 +13,22 @@ For any tag or alarm text it shows:
 - follow-up tags, the IAS / AutoChief logic that uses the signal and the IAS mimic screen it belongs to
 - the manual and PDF page for every value
 
+## Learning help (added 6 Nov 2026)
+
+A **Help** row under the search box has four switches. Each stays as you leave it on the device.
+
+- **Decode tag**: splits every form of the tag into its parts. Examples: `TE3721A` = TE (temperature element) + 3721 (WinGD point) + A (alarm system).
+  `MEP-TE-3721A_IT` = Port ME + TE + 3721A, ending `_IT`. `SLD-PR-12` = slowdown channel 12 of the Port ME, as received in the Stbd system.
+  Endings like `_IT` and `_NA` are explained by how they are used in this ship's list. The manuals do not define them.
+- **Plain English**: writes the short yard description out in full ("M/E T/C IN. EXH. GAS TEMP" -> "Main engine turbocharger inlet exhaust gas temperature").
+- **What it means**: the card's fields as a few sentences: who uses the signal, limits, what happens, the wire route, cross-check tags and guides.
+- **Explain words**: underlines terms (DPU, ESU, 4-20 mA, N.C., HH, slowdown, gas trip ...) and field names; tap one to read a short explanation. A **Glossary** page lists them all,
+  together with the short forms used in descriptions and the Kongsberg abbreviation lists.
+
+Always on: plain-word search ("turbocharger exhaust temperature", "starboard turbo"), a bar that shows the measuring range with the
+LL / L / H / HH limits, coloured action steps (Alarm -> Slowdown), and links between sensor cards and the guides that name them or cover their action.
+The code is in `build/learn.js`, inlined into the page at build time.
+
 ## Status
 
 First build (5 Nov 2026). Verification was deferred at the owner's request to save credits, but seven sources had already
@@ -60,4 +76,11 @@ ship's own IAS and on the source page before acting on a value. Values read by O
 python3 build/merge.py        # extract/*.json  -> data_raw.json
 python3 build/finalize.py     # adds footer and examples -> data.json
 python3 build/encrypt_build.py data.json build/template.html index.html "<access code>" --repo
+```
+
+When only the page code changed (template or `learn.js`), keep the existing encrypted data block so devices do not have to enter the
+access code again:
+
+```
+python3 build/encrypt_build.py - build/template.html index.html "<access code>" --repo --reuse-from index.html
 ```
