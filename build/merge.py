@@ -209,6 +209,17 @@ def merge_io(rows):
     for y in out: y.pop('src', None)
     return out
 
+# WECS failure IDs reach the IAS over Modbus; on the IAS they are named MES-<address> (Stbd) / MEP-<address> (Port)
+MODBUS = re.compile(r'Modbus address:\s*(\d{4,6})')
+for s in SIG.values():
+    for n in s['_notes']:
+        m = MODBUS.search(n)
+        if m:
+            for pre in ('MES-', 'MEP-'):
+                if pre + m.group(1) not in s['t']: s['t'].append(pre + m.group(1))
+            s['_notes'].append(f"IAS tag: MES-{m.group(1)} on the Stbd ME alarm pages, MEP-{m.group(1)} on the Port ME alarm pages (Modbus address from WECS).")
+            break
+
 # per-cylinder ranges that were kept as one key (e.g. TE1121-25A = TE1121A..TE1125A): add one alias tag per cylinder
 RANGE = re.compile(r'^([A-Z]{1,4}\d{2})(\d)(\d)-(\d)(\d)([A-Z]\d?)$')
 for s in SIG.values():
