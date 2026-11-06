@@ -39,6 +39,10 @@ Treat every value as "check on the page before acting"; values read by OCR are m
 
 ## Sources
 
+Jiangnan **E/R Monitoring and Alarm List 70401004JL** (final drawing 2024-06-06, H2700-H2705): the yard's IAS point list, 10,221 rows with
+channel tag, description, instrument tag, data/signal type, range, LL/L/H/HH limits, delay and alarm block group. Parsed from the PDF text
+(table rules detected on the page image, words placed by coordinates), every row number present once.
+
 Kongsberg: KFDD 5354199 (Common), 5354200 (Machinery & Ballast), 5354202 (Cargo), 5354203 (PMS), 5354204 (ESD),
 5354205 (Vapour handling), 5354206 (GMS), 5354208 (General description), 5354209 (External interface), 5354210 (SPM),
 5355814 (IMS), MIMIC book 5354211 (screen titles), AutoChief 600 installation manual 5314542 for H2701 with

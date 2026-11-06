@@ -109,7 +109,7 @@ def get_sig(key):
         order.append(key)
     return SIG[key]
 
-PRIORITY = {'wice': 9, 'denis': 9, 'instruments': 8, 'ac_conn_params': 6, 'ac_iolist': 6, 'im_failures': 7,
+PRIORITY = {'er_list': 10, 'wice': 9, 'denis': 9, 'instruments': 8, 'ac_conn_params': 6, 'ac_iolist': 6, 'im_failures': 7,
             'kfdd_vapour': 5, 'kfdd_esd_gms': 5, 'kfdd_cargo': 5, 'kfdd_pms': 5, 'kfdd_machinery': 5, 'kchief_system': 5,
             'ac_docs': 4, 'misc_manuals': 4, 'mom_1': 3, 'mom_2': 3, 'mom_3': 3}
 
@@ -164,7 +164,7 @@ for r in recs:
     s['_sys'][sys_of(r.get('system'))] += PRIORITY.get(src, 1)
     for f_src, f_dst in [('equipment', 'eq'), ('sensor_type', 'st'), ('signal_type', 'sg'), ('range', 'rg'), ('unit', 'u'),
                          ('setpoint', 'sp'), ('action', 'ac'), ('delay', 'dl'), ('from', 'from'), ('to', 'to'),
-                         ('box', 'box'), ('part_no', 'pn'), ('cylinder', 'cy')]:
+                         ('box', 'box'), ('part_no', 'pn'), ('cylinder', 'cy'), ('alarm_group', 'ag')]:
         if r.get('dpu') and f_src in ('setpoint', 'action', 'delay', 'from', 'to'):  # engine-specific: keep with the I/O row
             continue
         setf(s, f_dst, r.get(f_src), src)
@@ -222,6 +222,7 @@ for s in SIG.values():
 
 # per-cylinder ranges that were kept as one key (e.g. TE1121-25A = TE1121A..TE1125A): add one alias tag per cylinder
 RANGE = re.compile(r'^([A-Z]{1,4}\d{2})(\d)(\d)-(\d)(\d)([A-Z]\d?)$')
+RANGE_ALIASES = set()
 for s in SIG.values():
     m = RANGE.match(s['k'])
     if not m: continue
@@ -230,8 +231,36 @@ for s in SIG.values():
         for n in range(a, b + 1):
             alias = f"{m.group(1)}{n:02d}{m.group(6)}"
             if alias not in s['t']: s['t'].append(alias)
+            RANGE_ALIASES.add(norm_key(alias))
         s.setdefault('cy', 'all (1-5)')
         s['_notes'].append(f"Printed as a range for cylinders 1-5: the per-cylinder tags are {m.group(1)}{a:02d}{m.group(6)} to {m.group(1)}{b:02d}{m.group(6)}.")
+
+# alias union: if record A's key is printed as an alias on record B (e.g. MES-10066 on COFD-66), merge A into B
+def merge_into(dst, src):
+    for t in src['t']:
+        if t not in dst['t']: dst['t'].append(t)
+    if src['k'] not in dst['t']: dst['t'].append(src['k'])
+    for r_ in src['rl']:
+        if r_ not in dst['rl']: dst['rl'].append(r_)
+    dst['io'] += src['io']; dst['rel'] += src['rel']; dst['_notes'] += src['_notes']; dst['_desc'] += src['_desc']
+    dst['_sys'].update(src['_sys']); dst['_src'] |= src['_src']
+    if '_eng' in src: dst.setdefault('_eng', set()).update(src['_eng'])
+    if '_scr' in src: dst.setdefault('_scr', []).extend(src['_scr'])
+    if src.get('ocr'): dst['ocr'] = 1
+    add_refs(dst['ref'], src['ref'])
+    for f in ('eq', 'st', 'sg', 'rg', 'u', 'sp', 'ac', 'dl', 'from', 'to', 'box', 'pn', 'cy', 'lim'):
+        if f in src and (f not in dst or src.get('_p_' + f, -1) > dst.get('_p_' + f, -1)):
+            dst[f] = src[f]; dst['_p_' + f] = src.get('_p_' + f, -1)
+alias_of = {}
+for k, s in SIG.items():
+    for t in s['t']:
+        tk = norm_key(t)
+        if tk != k and tk not in RANGE_ALIASES: alias_of.setdefault(tk, k)
+merged_away = 0
+for k in list(SIG):
+    if k in alias_of and alias_of[k] in SIG and alias_of[k] != k:
+        merge_into(SIG[alias_of[k]], SIG[k]); del SIG[k]; order.remove(k); merged_away += 1
+report.append(f'alias merges: {merged_away}')
 
 for s in SIG.values():
     s['io'] = merge_io(s['io'])
@@ -242,6 +271,7 @@ for s in SIG.values():
         s['d'] = s['k']
     s['s'] = s['_sys'].most_common(1)[0][0] if s['_sys'] else SYSIDX['Other']
     eng = s.get('_eng') or set()
+    if {'P', 'S'} <= eng: s['d'] = re.sub(r'\s*\((P|S)\)', '', s['d'])
     if eng == {'P'}: s['e'] = 'P'
     elif eng == {'S'}: s['e'] = 'S'
     elif eng: s['e'] = 'B'
@@ -352,7 +382,7 @@ pos = {k: i for i, k in enumerate(keys)}
 sig_out = []
 for k in keys:
     s = SIG[k]
-    o = {f: s[f] for f in ('k', 't', 'd', 's', 'eq', 'rl', 'st', 'sg', 'rg', 'u', 'lim', 'sp', 'ac', 'dl', 'from', 'to', 'box', 'pn', 'cy', 'e', 'n', 'ocr', 'scr', 'fn', 'rel', 'io', 'cf', 'ref') if s.get(f) not in (None, [], '', {})}
+    o = {f: s[f] for f in ('k', 't', 'd', 's', 'eq', 'rl', 'st', 'sg', 'rg', 'u', 'lim', 'sp', 'ac', 'dl', 'from', 'to', 'box', 'pn', 'cy', 'ag', 'e', 'n', 'ocr', 'scr', 'fn', 'rel', 'io', 'cf', 'ref') if s.get(f) not in (None, [], '', {})}
     if o.get('t') == [k]: o.pop('t')
     if s.get('_g'): o['g'] = s['_g'][0]
     sig_out.append(o)

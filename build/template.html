@@ -301,7 +301,7 @@ function ioRows(r){
   if (!io.length) return '';
   return '<div class="sec"><div class="sech">IAS / AutoChief I/O address' + (io.length > 1 ? 'es' : '') + '</div>' +
     io.map(x => '<div class="iorow"><div class="iohead">' + (x.e ? '<span class="eng">' + (x.e === 'P' ? 'Port' : 'Stbd') + '</span>' : '') + '<code>' + hl(x.tag) + '</code>' + (x.fc ? '<span class="sub">' + hl(x.fc) + '</span>' : '') + '</div>' +
-      '<div class="ioaddr">' + [x.dpu ? 'DPU <b>' + hl(x.dpu) + '</b>' + (x.mod ? ' ' + hl(x.mod) : '') : '', x.ch ? 'ch <b>' + hl(x.ch) + '</b>' : '', x.term ? 'terminal <b>' + hl(x.term) + '</b>' : '', x.cab ? 'cabinet ' + hl(x.cab) : ''].filter(Boolean).join(' · ') + '</div>' +
+      '<div class="ioaddr">' + [x.dpu ? 'DPU <b>' + hl(x.dpu) + '</b>' + (x.mod ? ' ' + hl(x.mod) : '') : (x.mod ? hl(x.mod) : ''), x.ch ? (x.ch.charAt(0) === '#' ? 'yard list row <b>' + hl(x.ch.slice(1)) + '</b>' : 'ch <b>' + hl(x.ch) + '</b>') : '', x.term ? (x.ch && x.ch.charAt(0) === '#' ? 'point <b>' : 'terminal <b>') + hl(x.term) + '</b>' : '', x.cab ? 'cabinet ' + hl(x.cab) : ''].filter(Boolean).join(' · ') + '</div>' +
       (x.d && norm(x.d) !== norm(r.d) ? '<div class="sub">' + hl(x.d) + '</div>' : '') +
       (x.lim ? '<div>' + limits(x.lim) + '</div>' : '') + (x.sp ? '<div class="sub">' + hl(x.sp) + '</div>' : '') +
       (x.ag ? '<div class="sub">Alarm group ' + hl(x.ag) + '</div>' : '') + (x.n ? '<div class="sub">' + hl(x.n) + '</div>' : '') + '</div>').join('') + '</div>';
@@ -349,7 +349,7 @@ function cardSig(r, exact){
     '<div class="desc">' + hl(r.d) + '</div>' +
     '<div class="fields">' +
       field('Sensor', hl(r.st)) + field('Signal', hl(r.sg)) + field('Range', hl(r.rg) + (r.u && !(r.rg || '').includes(r.u) ? ' <span class="sub">' + esc(r.u) + '</span>' : '')) +
-      field('Limits', limits(r.lim)) + field('Set point', hl(r.sp)) + field('Action', hl(r.ac)) + field('Delay', hl(r.dl)) + field('Part no.', hl(r.pn)) +
+      field('Limits', limits(r.lim)) + field('Set point', hl(r.sp)) + field('Action', hl(r.ac)) + field('Delay', hl(r.dl)) + field('Alarm group', hl(r.ag)) + field('Part no.', hl(r.pn)) +
     '</div>' +
     signalPath(r) + ioRows(r) +
     (r.cf && r.cf.length ? '<div class="sec"><div class="sech">AutoChief safety configuration</div>' + r.cf.filter(c => !engine || c.indexOf(engine === 'P' ? 'Stbd:' : 'Port:') !== 0).map(c => '<div style="font-size:13.5px;margin:3px 0">' + hl(c) + '</div>').join('') + '</div>' : '') +
