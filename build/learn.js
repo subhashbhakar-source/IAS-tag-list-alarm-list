@@ -554,5 +554,36 @@ function prep(D){
   return linkGuides(D);
 }
 
-return {_wgroup: () => WGROUP, esc, plain, same, decode, isa, signalPlain, limitBar, actionChain, actionWords, LIMNAME, GL, GLGROUPS, terms, synonyms, prep, ABBR, ABBR_DOT};
+// ---------------- IAS function-module terminals ----------------
+// Meaning of the terminal names seen on K-Chief "Show Connection" windows, from the name itself and the PMS KFDD 5354203.
+const BTERM = {
+  ShutdownLoc:'shutdown from the engine\'s own safety system', ShutdownAVM:'second shutdown input (from IAS logic)',
+  AlStartRCS:'alarm start request (variant)', AlStartRCCS:'alarm start request (variant)',
+  AddReq:'"alarm start": start the next standby while this generator stays on line', Remote:'generator / breaker in remote control',
+  Opened:'breaker open', Closed:'breaker closed', CBTripped:'breaker tripped', CBRemote:'breaker in remote',
+  CnctInhib:'connect inhibit', DCnctInhib:'disconnect inhibit', RunRated:'running at rated speed', StartInhib:'start inhibit',
+  StbyInhib:'standby inhibit', GenLoad:'generator load (kW)', GenFreq:'generator frequency', Current:'current', Voltage:'voltage',
+  LCMaxLoad:'maximum load allowed by load control', LoadshFail:'load-sharing failure', TripCB:'trip the breaker',
+  ActOpen:'command: open the breaker', ActClose:'command: close the breaker', ActSync:'command: synchronise and close',
+  ActStart:'command: start the engine', ActStop:'command: stop the engine', LoadRef:'load set point', ReduceLoad:'reduce load',
+  Running:'running', ActAlarm:'alarm active', TxtLine1:'status text line 1 on the mimic', TxtLine2:'status text line 2 on the mimic',
+  TxtLine3:'status text line 3 on the mimic', TxtLine4:'status text line 4 on the mimic', OutGenLoad:'generator load out',
+  ReadySt:'ready to start', OutReset:'reset', StartFail:'start failure', Connected:'connected to the bus',
+  ProMeas:'value coming in (from an I/O channel or another block)', Meas1:'value going out', AlSuppress:'alarm suppression',
+  LimitHH:'high-high limit passed', LimitH:'high limit passed', LimitL:'low limit passed', LimitLL:'low-low limit passed',
+  LogOut:'output: ON when any input is ON', LogHist:'output that holds until reset', Reset:'reset input',
+  Bus_Abn:'bus abnormal', Bus_Alive:'bus alive', BusAlive:'bus alive', BusFreq:'bus frequency', DG_Online:'generator on line',
+  TotDDGNum:'number of DGs on line', BusLowFreq:'bus frequency low', OverCurrent:'over-current', OneSGRun:'only the SG on the bus, no DG',
+  DG_ActSync:'sync / close request from the generator block', ActSyncRaw:'sync request passed to the bus logic', ActSyncCMD:'breaker close command out',
+  InOpened:'open limit switch', InClosed:'closed limit switch', OutOpened:'breaker open', OutClosed:'breaker closed', OutAvailable:'breaker available / remote',
+  NetFreq:'bus frequency', NetVoltage:'bus voltage', Blackout:'blackout', OutColour:'bus alive (also colours the mimic)',
+  Freq_HH:'frequency high-high', Freq_LL:'frequency low-low', Volt_HH:'voltage high-high', Volt_LL:'voltage low-low',
+  ME_Permission:'main engine permits the SG', SGPermission:'main engine permits the SG', SG_Online:'SG on line', ChangeOverReq:'changeover to DG requested',
+  SlowDown_PreW:'ME slowdown pre-warning', CrashAstern:'crash astern', ME_SpdHoldAct:'ME speed hold active', Add_1StandbyDG:'start one standby DG',
+  '2ndStandbyDG':'start a second standby DG'
+};
+const bterm = t => BTERM[t] || (/^Con\d+$/.test(t) ? 'input ' + t.slice(3) : /_Online$/.test(t) ? t.replace(/_Online$/, '') + ' on line' :
+  /_Shutdown$/.test(t) ? 'trip ' + t.replace(/_Shutdown$/, '') + ' breaker' : /^GenLoad\d$/.test(t) ? 'load of generator ' + t.slice(-1) : '');
+
+return {_wgroup: () => WGROUP, bterm, esc, plain, same, decode, isa, signalPlain, limitBar, actionChain, actionWords, LIMNAME, GL, GLGROUPS, terms, synonyms, prep, ABBR, ABBR_DOT};
 })();

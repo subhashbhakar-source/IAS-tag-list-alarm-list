@@ -14,6 +14,9 @@ usage: encrypt_build.py DATA.json TEMPLATE.html OUT.html ACCESS_CODE [--repo] [-
     encrypting again (use it when only the page code changed). The salt stays the same, so
     devices that already entered the access code keep working without entering it again.
     DATA.json may then be "-"; if a file is given, the reused block must decrypt to it.
+  - --keep-salt-from OLD.html encrypts NEW data but with the salt (and iteration count) of an existing
+    page and a fresh random IV. The key derived from the access code is then unchanged, so devices that
+    saved it keep working, while the data itself is new.
 """
 import base64, gzip, hashlib, json, os, re, sys
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -32,7 +35,11 @@ def blob_from_page(path):
 
 def main():
     args = [a for a in sys.argv[1:]]
-    reuse = None
+    reuse = keep = None
+    if '--keep-salt-from' in args:
+        i = args.index('--keep-salt-from')
+        keep = args[i + 1]
+        del args[i:i + 2]
     if '--reuse-from' in args:
         i = args.index('--reuse-from')
         reuse = args[i + 1]
@@ -54,11 +61,18 @@ def main():
         raw = open(data_path, 'rb').read()
         json.loads(raw)  # must be valid JSON
         gz = gzip.compress(raw, compresslevel=9, mtime=0)
-        salt = os.urandom(16)
+        it = ITER
+        if keep:
+            old = blob_from_page(keep)
+            salt, it = base64.b64decode(old['salt']), old['iter']
+            okey = hashlib.pbkdf2_hmac('sha256', norm, salt, it, 32)
+            AESGCM(okey).decrypt(base64.b64decode(old['iv']), base64.b64decode(old['ct']), None)  # the code must open the old page
+        else:
+            salt = os.urandom(16)
         iv = os.urandom(12)
-        key = hashlib.pbkdf2_hmac('sha256', norm, salt, ITER, 32)
+        key = hashlib.pbkdf2_hmac('sha256', norm, salt, it, 32)
         ct = AESGCM(key).encrypt(iv, gz, None)
-        blob = {"v": 1, "iter": ITER, "salt": base64.b64encode(salt).decode(),
+        blob = {"v": 1, "iter": it, "salt": base64.b64encode(salt).decode(),
                 "iv": base64.b64encode(iv).decode(), "ct": base64.b64encode(ct).decode()}
         gz_len = len(gz)
 
@@ -84,7 +98,7 @@ def main():
     pt = AESGCM(hashlib.pbkdf2_hmac('sha256', norm, s2, b2['iter'], 32)).decrypt(i2, c2, None)
     assert gzip.decompress(pt) == raw
     print(f'data {len(raw)/1e6:.2f} MB -> gzip {gz_len/1e6:.2f} MB -> page {len(html)/1e6:.2f} MB  ({out_path})'
-          + ('  [data block reused]' if reuse else ''))
+          + ('  [data block reused]' if reuse else '') + ('  [salt kept, new IV]' if keep else ''))
 
 
 if __name__ == '__main__':

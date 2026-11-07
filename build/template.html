@@ -198,6 +198,20 @@ footer{color:var(--muted);font-size:11.5px;text-align:center;padding-block:8px 3
 .act .sv2{background:var(--o-bg);color:var(--o)}
 .act .sv3{background:var(--s-bg);color:var(--s)}
 .act .sep{color:var(--muted);font-weight:700}
+.bterm{display:grid;grid-template-columns:minmax(0,9.5em) auto minmax(0,1fr);gap:2px 8px;align-items:start;padding:6px 0;border-top:1px solid var(--line);font-size:13.5px}
+.bterm:first-of-type{border-top:0}
+.bterm .tn{font:700 12.5px var(--mono);word-break:break-all}
+.bterm .tn small{display:block;font:400 11.5px var(--sans);color:var(--muted);word-break:normal}
+.bterm .ar{color:var(--muted);font-weight:700;padding-top:3px}
+.bterm .src{min-width:0;display:flex;flex-wrap:wrap;gap:4px}
+.bterm .src code{font:600 12px var(--mono);word-break:break-all;padding:4px 0}
+.bterm .src .tag{word-break:break-word}
+.photo{font-size:12px;color:var(--muted);margin-top:8px}
+.wired{font-size:13.5px}
+.wired b{font-family:var(--mono)}
+.flow{margin:6px 0 0;padding-left:20px;font-size:14px}
+.flow li{margin:5px 0;line-height:1.5}
+.flow .tag{vertical-align:baseline}
 #sheet{position:fixed;inset:0;z-index:20;background:var(--scrim);display:flex;align-items:flex-end;justify-content:center}
 .sheetbox{background:var(--card);color:var(--ink);width:100%;max-width:560px;max-height:78vh;overflow:auto;border-radius:16px 16px 0 0;padding:0 16px calc(env(safe-area-inset-bottom, 0px) + 18px);box-shadow:0 -4px 24px rgba(0,0,0,.25)}
 .sheethead{display:flex;justify-content:space-between;align-items:center;gap:8px;position:sticky;top:0;background:var(--card);padding-top:8px}
@@ -245,6 +259,7 @@ footer{color:var(--muted);font-size:11.5px;text-align:center;padding-block:8px 3
       <button data-f="L" aria-pressed="false"><span class="dot dL"></span>Local</button>
       <button data-f="grp" aria-pressed="false">Sensor groups</button>
       <button data-f="fn" aria-pressed="false">Logic</button>
+      <button data-f="blk" aria-pressed="false">IAS logic (photos)</button>
       <button data-f="scr" aria-pressed="false">IAS screens</button>
       <button data-f="hw" aria-pressed="false">Units &amp; cables</button>
       <button data-f="how" aria-pressed="false">Guides</button>
@@ -329,6 +344,29 @@ D.unit.forEach((r, i) => rows.push(Object.assign({T:'unit', i}, r)));
 D.cab.forEach((r, i) => rows.push(Object.assign({T:'cab', i}, r)));
 D.how.forEach((r, i) => rows.push(Object.assign({T:'how', i}, r)));
 const BYKEY = new Map(); D.sig.forEach((r, i) => BYKEY.set(r.k, i));
+// ---- IAS logic read from the user's operator-station photos (D.conn) ----
+const CONN = D.conn || {blocks: [], flows: [], io: {}};
+const BLK = new Map();
+CONN.blocks.forEach((b, i) => { BLK.set(b.n, i); rows.push(Object.assign({T:'blk', i}, b)); });
+CONN.flows.forEach((f, i) => rows.push(Object.assign({T:'flow', i}, f)));
+const sqz = s => String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]/g, '');
+const TAGMAP = new Map();
+D.sig.forEach((r, i) => {
+  for (const t of [r.k].concat(r.t || [], (r.io || []).map(x => x.tag))){
+    if (!t) continue;
+    for (const v of [t, String(t).replace(/([_-](NA|NC|IT|US|YISH|XYO|XYC|ZSO|ZSC|ZT|XC|SHD))$/, '')]){ const q = sqz(v); if (q && !TAGMAP.has(q)) TAGMAP.set(q, i); }
+  }
+});
+const tagIdx = name => { const q = sqz(String(name).replace(/ \(.*$/, '').split('/')[0]); return TAGMAP.has(q) ? TAGMAP.get(q) : null; };
+const SIGLOGIC = new Map();   // signal index -> [[block index, 'self'|'in'|'out', terminal]]
+const addSL = (si, x) => { if (si == null) return; if (!SIGLOGIC.has(si)) SIGLOGIC.set(si, []); const l = SIGLOGIC.get(si); if (!l.some(y => y[0] === x[0] && y[1] === x[1] && y[2] === x[2])) l.push(x); };
+CONN.blocks.forEach((b, bi) => {
+  addSL(tagIdx(b.n), [bi, 'self', '']);
+  for (const [t, src] of b.i) addSL(tagIdx(src), [bi, 'in', t]);
+  for (const [t, ds] of b.o) if (Array.isArray(ds)) for (const x of ds) addSL(tagIdx(x), [bi, 'out', t]);
+});
+const SIGIO = new Map();      // signal index -> I/O channel read on board
+Object.entries(CONN.io || {}).forEach(([tag, x]) => { const si = tagIdx(tag); if (si != null) SIGIO.set(si, Object.assign({tag}, x)); });
 
 const norm = s => String(s == null ? '' : s).toLowerCase();
 const squash = s => norm(s).replace(/[^a-z0-9]/g, '');
@@ -342,6 +380,8 @@ for (const r of rows){
   else if (r.T === 'scr') parts = [r.title, r.sec, 'mimic screen page ' + r.page, (r.tags || []).join(' '), (r.sys || []).map(s => SYS[s]).join(' ')];
   else if (r.T === 'unit') parts = [r.name, r.type, r.loc, SYS[r.s], txt(r.conn), txt(r.fn), r.n];
   else if (r.T === 'cab') parts = ['cable', r.no, r.type, r.sig, r.from, r.to, r.n];
+  else if (r.T === 'blk') parts = [r.n, r.ty, r.w, r.st, 'IAS logic block function module connection show connection photo', (r.i || []).map(x => x.join(' ')).join(' '), (r.o || []).map(x => x[0] + ' ' + (Array.isArray(x[1]) ? x[1].join(' ') : '')).join(' ')];
+  else if (r.T === 'flow') parts = [r.title, 'IAS logic chain', (r.steps || []).join(' '), (r.tags || []).join(' ')];
   else parts = [r.title, SYS[r.s], txt(r.steps)];
   const p = parts.filter(Boolean).join(' | ');
   r.hay = norm(p); r.hayS = squash(p);
@@ -505,7 +545,7 @@ function cardSig(r, exact){
       field('Limits', limits(r.lim)) + field('Set point', gx(r.sp)) + field('Action', LEARN.actionChain(r.ac, gx)) + field('Delay', gx(r.dl)) + field('Alarm group', gx(r.ag)) + field('Part no.', hl(r.pn)) +
     '</div>' +
     (bar ? '<div class="sec">' + sech('Limits on the measuring range', 'LIMITS') + bar + '</div>' : '') +
-    signalPath(r) + ioRows(r) +
+    signalPath(r) + sigLogic(r) + ioRows(r) +
     (r.cf && r.cf.length ? '<div class="sec">' + sech('AutoChief safety configuration', 'CFG') + r.cf.filter(c => !engine || c.indexOf(engine === 'P' ? 'Stbd:' : 'Port:') !== 0).map(c => '<div style="font-size:13.5px;margin:3px 0">' + gx(c) + '</div>').join('') + '</div>' : '') +
     groupSection(r) +
     (guides.length ? '<div class="sec">' + sech('Guides', 'GUIDES') + guides.slice(0, 8).map(i => '<div><button class="link" data-how="' + i + '">' + esc(D.how[i].title) + ' &#8594;</button></div>').join('') + '</div>' : '') +
@@ -516,6 +556,69 @@ function cardSig(r, exact){
     (r.n ? '<div class="sec"><div class="sech">Notes</div><div style="font-size:13.5px;white-space:pre-line">' + hl(r.n) + '</div></div>' : '') +
     (r.ocr ? '<div class="note">Read by OCR from a scanned page. Check the value on the page before you use it.</div>' : '') +
     refs(r.ref) + '</div>';
+}
+// ---------- IAS logic from photos ----------
+const STNAME = {PS042:'Port HVMSB logic (PS042)', PS141:'Stbd HVMSB logic (PS141)'};
+// a reference like "DG3Shdloc/LogOut": block or tag name becomes a jump button, the terminal stays as text
+function refBtn(ref){
+  const io = / \(I\/O channel\)$/.test(ref);
+  const base = ref.replace(/ \(.*$/, '');
+  const nm = base.split('/')[0], term = base.slice(nm.length);
+  let target = null;
+  if (BLK.has(nm)) target = nm; else { const si = tagIdx(nm); if (si != null) target = D.sig[si].k; }
+  const label = esc(nm) + (term ? '<span style="opacity:.6">' + esc(term) + '</span>' : '') + (io ? ' <span class="sub">I/O channel</span>' : '');
+  return target ? '<button class="tag go small" data-go="' + esc(target) + '">' + label + '</button>' : '<code>' + label + '</code>';
+}
+function termRow(t, arrow, refs){
+  const m = LEARN.bterm(t);
+  return '<div class="bterm"><div class="tn">' + hl(t) + (m ? '<small>' + esc(m) + '</small>' : '') + '</div><div class="ar">' + arrow + '</div><div class="src">' + refs + '</div></div>';
+}
+function cardBlk(r, exact){
+  const ins = (r.i || []).map(([t, s]) => termRow(t, '&#8592;', refBtn(s))).join('');
+  const outs = (r.o || []).map(([t, ds]) => termRow(t, '&#8594;', Array.isArray(ds) ? (ds.length ? ds.map(refBtn).join('') : '') : '<span class="sub">several — not expanded in the photo</span>')).join('');
+  const live = r.live ? '<details><summary>Live values when photographed' + (r.t ? ' (' + esc(r.t) + ')' : '') + '</summary><dl class="items">' +
+    Object.keys(r.live).map(pg => r.live[pg].map(([k, v]) => '<dt>' + esc(k) + ' <span class="sub">p.' + esc(pg) + '</span></dt><dd>' + esc(v) + '</dd>').join('')).join('') + '</dl></details>' : '';
+  const self = tagIdx(r.n);
+  return '<div class="card' + (exact ? ' exact' : '') + '"><div class="kind"><span>IAS logic block</span><span>' + esc(STNAME[r.st] || r.st) + '</span><span>' + esc(r.ty) + '</span></div>' +
+    '<div class="chips" style="margin-top:2px">' + copyChip(r.n, 'Block') + (self != null && D.sig[self].k !== r.n ? go(D.sig[self].k, 'Tag card') : '') + '</div>' +
+    '<div class="desc">' + hl(r.w) + '</div>' +
+    '<div class="sec">' + sech('Inputs — where each signal comes from', 'PATH') + (ins || '<div class="sub">No inputs connected in the photo.</div>') + '</div>' +
+    '<div class="sec">' + sech('Outputs — where each signal goes', 'PATH') + (outs || '<div class="sub">No outputs connected in the photo.</div>') + '</div>' +
+    (live ? '<div class="sec">' + live + '</div>' : '') +
+    (r.u && r.u.length ? '<div class="note">Read with doubt: ' + esc(r.u.join('; ')) + '. Check on the screen.</div>' : '') +
+    '<div class="photo">From your photos ' + esc((r.ph || []).join(', ')) + ' · Show Connection on OS042, ' + esc(r.t || '08 Nov 2026') + '. Only connected terminals are listed.</div></div>';
+}
+// turn block and tag names inside a sentence into jump buttons
+function linkify(text){
+  return String(text).split(/([A-Za-z0-9][A-Za-z0-9_\-]{1,}[A-Za-z0-9])/).map((p, i) => {
+    if (i % 2 === 0) return hl(p);
+    if (BLK.has(p)) return '<button class="tag go small" data-go="' + esc(p) + '">' + esc(p) + '</button>';
+    if (/\d/.test(p) && /[_-]/.test(p)){ const si = tagIdx(p); if (si != null) return '<button class="tag go small" data-go="' + esc(D.sig[si].k) + '">' + esc(p) + '</button>'; }
+    return hl(p);
+  }).join('');
+}
+function cardFlow(r, exact){
+  return '<div class="card' + (exact ? ' exact' : '') + '"><div class="kind"><span>IAS logic chain</span><span>from your photos</span></div>' +
+    '<div class="ttl">' + hl(r.title) + '</div><ol class="flow">' + (r.steps || []).map(s => '<li>' + linkify(s) + '</li>').join('') + '</ol>' +
+    '<div class="photo">' + esc(CONN.src || '') + '</div></div>';
+}
+// on a tag card: which photographed blocks use it, and the I/O channel read on board
+function sigLogic(r){
+  const si = r.i != null ? r.i : BYKEY.get(r.k);
+  const l = SIGLOGIC.get(si) || [];
+  const io = SIGIO.get(si);
+  if (!l.length && !io) return '';
+  let h = '<div class="sec">' + sech('IAS logic — from your photos', 'LOGIC');
+  if (io) h += '<div class="wired">Wired to I/O card <b>' + esc(io.m) + '</b> (RMP420-32 module in remote I/O FS42-1 of field station FS 42), channel <b>' + esc(io.c) + '</b>' +
+    (io.sg ? ' · ' + esc(io.sg) : '') + '. Value when photographed: ' + esc(io.v) + (io.e && io.e !== io.v ? ' = ' + esc(io.e) : '') + '.' +
+    (io.u ? ' <span class="sub">(row read with doubt)</span>' : '') + ' <span class="sub">' + esc(io.p) + '</span></div>';
+  const say = {self:'Its own IAS block:', in:'Read by', out:'Written by'};
+  for (const [bi, how, t] of l){
+    const b = CONN.blocks[bi];
+    h += '<div style="margin-top:6px;font-size:13.5px">' + say[how] + ' <button class="tag go small" data-go="' + esc(b.n) + '">' + esc(b.n) + '</button>' +
+      (t ? ' <span class="sub">' + (how === 'in' ? 'input ' : 'output ') + esc(t) + (LEARN.bterm(t) && !/^Con\d+$/.test(t) ? ' — ' + esc(LEARN.bterm(t)) : '') + '</span>' : '') + '</div>';
+  }
+  return h + '</div>';
 }
 function cardGrp(r, exact){
   return '<div class="card' + (exact ? ' exact' : '') + '"><div class="kind"><span>Sensor group</span><span>' + sysLine(r) + '</span></div>' +
@@ -586,6 +689,8 @@ function card(r, exact){
   if (r.T === 'scr') return cardScr(r, exact);
   if (r.T === 'unit') return cardUnit(r, exact);
   if (r.T === 'cab') return cardCab(r, exact);
+  if (r.T === 'blk') return cardBlk(r, exact);
+  if (r.T === 'flow') return cardFlow(r, exact);
   return cardHow(r, exact);
 }
 
@@ -598,13 +703,14 @@ function pass(r){
   if (filter === 'all') return true;
   if ('ASCL'.includes(filter)) return r.T === 'sig' && (r.rl || []).includes(filter);
   if (filter === 'grp') return r.T === 'grp';
-  if (filter === 'fn') return r.T === 'fn';
+  if (filter === 'fn') return r.T === 'fn' || r.T === 'blk' || r.T === 'flow';
+  if (filter === 'blk') return r.T === 'blk' || r.T === 'flow';
   if (filter === 'scr') return r.T === 'scr';
   if (filter === 'hw') return r.T === 'unit' || r.T === 'cab';
   if (filter === 'how') return r.T === 'how';
   return true;
 }
-const TYPEBOOST = {grp:5, sig:3, fn:2, scr:2, unit:1, cab:0, how:1};
+const TYPEBOOST = {grp:5, sig:3, fn:2, scr:2, unit:1, cab:0, how:1, blk:4, flow:4};
 function search(q){
   const toks = norm(q).split(/\s+/).filter(Boolean);
   const qs = squash(q);
@@ -628,6 +734,7 @@ function search(q){
     }
     if (r.T === 'grp' && r.sig.some(i => squash(D.sig[i].k) === qs)) score += 150;
     if (r.T === 'cab' && squash(r.no) === qs) score += 200;
+    if (r.T === 'blk' && squash(r.n) === qs) score += 210;
     if ((r.title || r.name) && norm(r.title || r.name).includes(norm(q))) score += 12;
     res.push([score, r]);
   }
@@ -637,6 +744,7 @@ function search(q){
 function isExact(r, qs){
   if (r.T === 'sig') return squash(r.k) === qs || (r.t || []).some(t => squash(t) === qs) || (r.io || []).some(x => squash(x.tag) === qs);
   if (r.T === 'cab') return squash(r.no) === qs;
+  if (r.T === 'blk') return squash(r.n) === qs;
   return false;
 }
 function home(){
@@ -648,6 +756,7 @@ function home(){
     '<div class="ex">' + D.examples.concat(['turbocharger exhaust temperature']).map(x => '<button data-ex="' + esc(x) + '">' + esc(x) + '</button>').join('') + '</div>' +
     '<h2>Learning help</h2><p>Switch these on in the <b style="color:var(--ink)">Help</b> row under the search box when you need them. They stay as you leave them on this device.</p>' +
     '<div class="legend"><b>Decode tag</b><span>splits each tag into its parts and says what each part means</span><b>Plain English</b><span>writes the short yard description out in full words</span><b>What it means</b><span>a few sentences on what the signal does, its limits and where its wire goes</span><b>Explain words</b><span>underlines terms such as DPU, 4-20 mA or HH — tap one for a short explanation</span></div>' +
+    (CONN.blocks.length ? '<h2>IAS logic from your photos</h2><p>' + CONN.blocks.length + ' function blocks and ' + CONN.flows.length + ' chains read from your OS042 photos (Port and Stbd HVMSB power management). <button class="link" data-ex="DG3" style="padding:0">Start with DG3 &#8594;</button> · <button class="link" data-flt="blk" style="padding:0">see all &#8594;</button></p>' : '') +
     '<p>You can also search in plain words, for example <i>turbocharger exhaust temperature</i>. <button class="link" data-gloss="1" style="padding:0">Open the glossary &#8594;</button></p>' +
     '<h2>What the colours mean</h2><div class="legend">' + ['A','S','C','L','I'].map(k => roleBadge(k) + '<span>' + esc(ROLELONG[k]) + '</span>').join('') + '</div>' +
     '<p>On WinGD engine tags the last letter tells you the same thing: <b style="color:var(--ink)">A</b> alarm system, <b style="color:var(--ink)">S</b> safety system, <b style="color:var(--ink)">C</b> control system, <b style="color:var(--ink)">L / M</b> local. Kongsberg tags start with <b style="color:var(--ink)">P</b> (Port ME) or <b style="color:var(--ink)">S</b> (Stbd ME).</p>' +
@@ -729,6 +838,7 @@ $out.addEventListener('click', e => {
   const hw = e.target.closest('[data-how]'); if (hw){ openOne('how', +hw.dataset.how); return; }
   const gs = e.target.closest('[data-gloss]'); if (gs){ openOne('gloss', 0); return; }
   const ex = e.target.closest('[data-ex]'); if (ex){ navigate(ex.dataset.ex); return; }
+  const fl = e.target.closest('[data-flt]'); if (fl){ hist.push([$q.value, filter, sysFilter]); $q.value = ''; sysFilter = null; setFilter(fl.dataset.flt); shown = 40; render(); window.scrollTo(0, 0); return; }
   const sy = e.target.closest('[data-sys]'); if (sy){ hist.push([$q.value, filter, sysFilter]); sysFilter = +sy.dataset.sys; $q.value = ''; shown = 40; render(); window.scrollTo(0, 0); return; }
   const g = e.target.closest('[data-go]'); if (g){ navigate(g.dataset.go); return; }
   const f = e.target.closest('[data-fn]'); if (f){ openOne('fn', +f.dataset.fn); return; }

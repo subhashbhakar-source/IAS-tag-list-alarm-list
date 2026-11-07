@@ -29,6 +29,20 @@ Always on: plain-word search ("turbocharger exhaust temperature", "starboard tur
 LL / L / H / HH limits, coloured action steps (Alarm -> Slowdown), and links between sensor cards and the guides that name them or cover their action.
 The code is in `build/learn.js`, inlined into the page at build time.
 
+## IAS logic from on-board photos (added 8 Nov 2026)
+
+40 K-Chief function blocks and 4 logic chains were read from 85 photos of operator station OS042 on Al Areef
+(Jiangnan H2702): Port and Stbd HVMSB power management, i.e. DG1, DG3, DG4 and SG2 generator blocks, alarm-start, bus-fault and breaker
+trip logic, and three RMP420-32 I/O cards (FS42-1_U02, _U05, _U06). They appear as "IAS logic block" and "IAS logic chain" cards
+(filter "IAS logic (photos)"). Tag cards show which blocks read or write the tag and the I/O card and channel it is wired to.
+The block data is ship configuration, so it lives only inside the encrypted data block, not in this repository.
+
+To add new data without asking devices for the access code again, encrypt with the existing page's salt:
+
+```
+python3 build/encrypt_build.py data.json build/template.html index.html "<access code>" --repo --keep-salt-from index.html
+```
+
 ## Status
 
 First build (5 Nov 2026). Verification was deferred at the owner's request to save credits, but seven sources had already
