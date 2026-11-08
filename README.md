@@ -31,11 +31,20 @@ The code is in `build/learn.js`, inlined into the page at build time.
 
 ## IAS logic from on-board photos (added 8 Nov 2026)
 
-40 K-Chief function blocks and 4 logic chains were read from 85 photos of operator station OS042 on Al Areef
-(Jiangnan H2702): Port and Stbd HVMSB power management, i.e. DG1, DG3, DG4 and SG2 generator blocks, alarm-start, bus-fault and breaker
-trip logic, and three RMP420-32 I/O cards (FS42-1_U02, _U05, _U06). They appear as "IAS logic block" and "IAS logic chain" cards
-(filter "IAS logic (photos)"). Tag cards show which blocks read or write the tag and the I/O card and channel it is wired to.
-The block data is ship configuration, so it lives only inside the encrypted data block, not in this repository.
+62 K-Chief function blocks and 9 logic chains were read from 188 photos of operator station OS042 on Al Areef
+(Jiangnan H2702):
+
+* 85 photos of the power management system — DG1, DG3, DG4 and SG2 generator blocks, alarm-start, bus-fault and breaker
+  trip logic, and three RMP420-32 I/O cards (FS42-1_U02, _U05, _U06);
+* 103 photos of the Port main-engine master gas valve (ESV-XI-CG614) and its surroundings — the open/close command logic
+  (FLEXI-VIEW), the interlock, the ESD-station network links, the "gas mode available" / gas-ready hand-shake with the
+  AutoChief, the GVU Modbus telegram, the N2 purge valve, and the I/O cards FS51_U10, FS51_U15 and FS31-1_U05.
+
+They appear as "IAS logic block" and "IAS logic chain" cards (filter "IAS logic (photos)"). Block cards now carry a plain-language
+reading of the FLEXI-VIEW logic and the key module parameters; chain cards can have grouped steps (for example "re-opening the
+master gas valve after an ESD / GBSS shutdown or a gas trip"). Tag cards show which blocks read or write the tag and the I/O card,
+Modbus telegram row or coil it is wired to. The block data is ship configuration, so it lives only inside the encrypted data block,
+not in this repository.
 
 To add new data without asking devices for the access code again, encrypt with the existing page's salt:
 

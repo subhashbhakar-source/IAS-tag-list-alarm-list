@@ -209,6 +209,7 @@ footer{color:var(--muted);font-size:11.5px;text-align:center;padding-block:8px 3
 .photo{font-size:12px;color:var(--muted);margin-top:8px}
 .wired{font-size:13.5px}
 .wired b{font-family:var(--mono)}
+.flowh{font-weight:600;margin:10px 0 2px;font-size:13.5px}
 .flow{margin:6px 0 0;padding-left:20px;font-size:14px}
 .flow li{margin:5px 0;line-height:1.5}
 .flow .tag{vertical-align:baseline}
@@ -346,17 +347,20 @@ D.how.forEach((r, i) => rows.push(Object.assign({T:'how', i}, r)));
 const BYKEY = new Map(); D.sig.forEach((r, i) => BYKEY.set(r.k, i));
 // ---- IAS logic read from the user's operator-station photos (D.conn) ----
 const CONN = D.conn || {blocks: [], flows: [], io: {}};
+const flatSteps = steps => (steps || []).flatMap(x => Array.isArray(x) ? [x[0]].concat(x[1] || []) : [x]);   // flow steps may be grouped [heading, [steps]]
 const BLK = new Map();
 CONN.blocks.forEach((b, i) => { BLK.set(b.n, i); rows.push(Object.assign({T:'blk', i}, b)); });
 CONN.flows.forEach((f, i) => rows.push(Object.assign({T:'flow', i}, f)));
 const sqz = s => String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]/g, '');
 const TAGMAP = new Map();
-D.sig.forEach((r, i) => {
+// pass 1: exact tags and aliases; pass 2: tags with the I/O suffix (_NA, _ZSO ...) stripped — so an exact alias always wins
+[false, true].forEach(strip => D.sig.forEach((r, i) => {
   for (const t of [r.k].concat(r.t || [], (r.io || []).map(x => x.tag))){
     if (!t) continue;
-    for (const v of [t, String(t).replace(/([_-](NA|NC|IT|US|YISH|XYO|XYC|ZSO|ZSC|ZT|XC|SHD))$/, '')]){ const q = sqz(v); if (q && !TAGMAP.has(q)) TAGMAP.set(q, i); }
+    const v = strip ? String(t).replace(/([_-](NA|NC|IT|US|YISH|XYO|XYC|ZSO|ZSC|ZT|XC|SHD))$/, '') : t;
+    const q = sqz(v); if (q && !TAGMAP.has(q)) TAGMAP.set(q, i);
   }
-});
+}));
 const tagIdx = name => { const q = sqz(String(name).replace(/ \(.*$/, '').split('/')[0]); return TAGMAP.has(q) ? TAGMAP.get(q) : null; };
 const SIGLOGIC = new Map();   // signal index -> [[block index, 'self'|'in'|'out', terminal]]
 const addSL = (si, x) => { if (si == null) return; if (!SIGLOGIC.has(si)) SIGLOGIC.set(si, []); const l = SIGLOGIC.get(si); if (!l.some(y => y[0] === x[0] && y[1] === x[1] && y[2] === x[2])) l.push(x); };
@@ -365,8 +369,9 @@ CONN.blocks.forEach((b, bi) => {
   for (const [t, src] of b.i) addSL(tagIdx(src), [bi, 'in', t]);
   for (const [t, ds] of b.o) if (Array.isArray(ds)) for (const x of ds) addSL(tagIdx(x), [bi, 'out', t]);
 });
-const SIGIO = new Map();      // signal index -> I/O channel read on board
-Object.entries(CONN.io || {}).forEach(([tag, x]) => { const si = tagIdx(tag); if (si != null) SIGIO.set(si, Object.assign({tag}, x)); });
+const SIGIO = new Map();      // signal index -> [I/O channels read on board]
+Object.entries(CONN.io || {}).forEach(([tag, x]) => { const si = tagIdx(tag); if (si == null) return; if (!SIGIO.has(si)) SIGIO.set(si, []); SIGIO.get(si).push(Object.assign({tag}, x)); });
+const IOMODS = CONN.iomods || {};
 
 const norm = s => String(s == null ? '' : s).toLowerCase();
 const squash = s => norm(s).replace(/[^a-z0-9]/g, '');
@@ -380,8 +385,8 @@ for (const r of rows){
   else if (r.T === 'scr') parts = [r.title, r.sec, 'mimic screen page ' + r.page, (r.tags || []).join(' '), (r.sys || []).map(s => SYS[s]).join(' ')];
   else if (r.T === 'unit') parts = [r.name, r.type, r.loc, SYS[r.s], txt(r.conn), txt(r.fn), r.n];
   else if (r.T === 'cab') parts = ['cable', r.no, r.type, r.sig, r.from, r.to, r.n];
-  else if (r.T === 'blk') parts = [r.n, r.ty, r.w, r.st, 'IAS logic block function module connection show connection photo', (r.i || []).map(x => x.join(' ')).join(' '), (r.o || []).map(x => x[0] + ' ' + (Array.isArray(x[1]) ? x[1].join(' ') : '')).join(' ')];
-  else if (r.T === 'flow') parts = [r.title, 'IAS logic chain', (r.steps || []).join(' '), (r.tags || []).join(' ')];
+  else if (r.T === 'blk') parts = [r.n, r.ty, r.w, r.st, (r.lg || []).join(' '), 'IAS logic block function module connection show connection photo', (r.i || []).map(x => x.join(' ')).join(' '), (r.o || []).map(x => x[0] + ' ' + (Array.isArray(x[1]) ? x[1].join(' ') : '')).join(' ')];
+  else if (r.T === 'flow') parts = [r.title, 'IAS logic chain', flatSteps(r.steps).join(' '), (r.tags || []).join(' ')];
   else parts = [r.title, SYS[r.s], txt(r.steps)];
   const p = parts.filter(Boolean).join(' | ');
   r.hay = norm(p); r.hayS = squash(p);
@@ -407,7 +412,10 @@ const listJoin = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' 
 function hl(text){
   const s = esc(text);
   if (!TOKS.length) return s;
-  const re = new RegExp('(' + TOKS.map(t => esc(t).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'gi');
+  // do not light up every "an" / "to" inside long sentences: in a multi-word query only words of 3+ characters are marked
+  const toks = TOKS.length > 1 ? TOKS.filter(t => t.length >= 3) : TOKS;
+  if (!toks.length) return s;
+  const re = new RegExp('(' + toks.map(t => esc(t).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'gi');
   return s.replace(re, '<mark>$1</mark>');
 }
 const roleBadge = (r, extra) => '<span class="role r' + r + '" title="' + esc(ROLELONG[r] || '') + '">' + esc(ROLE[r] || r) + (extra ? ' ' + extra : '') + '</span>';
@@ -558,7 +566,7 @@ function cardSig(r, exact){
     refs(r.ref) + '</div>';
 }
 // ---------- IAS logic from photos ----------
-const STNAME = {PS042:'Port HVMSB logic (PS042)', PS141:'Stbd HVMSB logic (PS141)'};
+const STNAME = {PS042:'Port HVMSB logic (PS042)', PS141:'Stbd HVMSB logic (PS141)', PS151:'Cargo / GMS station (PS151)', PS052:'ME GVU & N2 purge station (PS052)', PS032:'ME Port GVU interface (PS032)', PS131:'ME Stbd machinery station (PS131)', PS081:'ESD / GBSS station (PS081)'};
 // a reference like "DG3Shdloc/LogOut": block or tag name becomes a jump button, the terminal stays as text
 function refBtn(ref){
   const io = / \(I\/O channel\)$/.test(ref);
@@ -569,22 +577,24 @@ function refBtn(ref){
   const label = esc(nm) + (term ? '<span style="opacity:.6">' + esc(term) + '</span>' : '') + (io ? ' <span class="sub">I/O channel</span>' : '');
   return target ? '<button class="tag go small" data-go="' + esc(target) + '">' + label + '</button>' : '<code>' + label + '</code>';
 }
-function termRow(t, arrow, refs){
-  const m = LEARN.bterm(t);
+function termRow(t, arrow, refs, ty){
+  const m = LEARN.bterm(t, ty);
   return '<div class="bterm"><div class="tn">' + hl(t) + (m ? '<small>' + esc(m) + '</small>' : '') + '</div><div class="ar">' + arrow + '</div><div class="src">' + refs + '</div></div>';
 }
 function cardBlk(r, exact){
-  const ins = (r.i || []).map(([t, s]) => termRow(t, '&#8592;', refBtn(s))).join('');
-  const outs = (r.o || []).map(([t, ds]) => termRow(t, '&#8594;', Array.isArray(ds) ? (ds.length ? ds.map(refBtn).join('') : '') : '<span class="sub">several — not expanded in the photo</span>')).join('');
+  const ins = (r.i || []).map(([t, s]) => termRow(t, '&#8592;', refBtn(s), r.ty)).join('');
+  const outs = (r.o || []).map(([t, ds]) => termRow(t, '&#8594;', Array.isArray(ds) ? (ds.length ? ds.map(refBtn).join('') : '<span class="sub">computed, not connected</span>') : '<span class="sub">several — not expanded in the photo</span>', r.ty)).join('');
   const live = r.live ? '<details><summary>Live values when photographed' + (r.t ? ' (' + esc(r.t) + ')' : '') + '</summary><dl class="items">' +
     Object.keys(r.live).map(pg => r.live[pg].map(([k, v]) => '<dt>' + esc(k) + ' <span class="sub">p.' + esc(pg) + '</span></dt><dd>' + esc(v) + '</dd>').join('')).join('') + '</dl></details>' : '';
   const self = tagIdx(r.n);
+  const lg = r.lg && r.lg.length ? '<div class="sec">' + sech('How its logic works — read from the FLEXI-VIEW / parameter pages', 'LOGIC') + '<ol class="flow">' + r.lg.map(x => '<li>' + linkify(x) + '</li>').join('') + '</ol></div>' : '';
+  const pm = r.pm && r.pm.length ? '<div class="sec"><details><summary>Key parameters (Module Parameters window)</summary><dl class="items">' + r.pm.map(([k, v]) => '<dt>' + esc(k) + '</dt><dd>' + esc(v) + '</dd>').join('') + '</dl></details></div>' : '';
   return '<div class="card' + (exact ? ' exact' : '') + '"><div class="kind"><span>IAS logic block</span><span>' + esc(STNAME[r.st] || r.st) + '</span><span>' + esc(r.ty) + '</span></div>' +
     '<div class="chips" style="margin-top:2px">' + copyChip(r.n, 'Block') + (self != null && D.sig[self].k !== r.n ? go(D.sig[self].k, 'Tag card') : '') + '</div>' +
-    '<div class="desc">' + hl(r.w) + '</div>' +
+    '<div class="desc">' + linkify(r.w) + '</div>' + lg +
     '<div class="sec">' + sech('Inputs — where each signal comes from', 'PATH') + (ins || '<div class="sub">No inputs connected in the photo.</div>') + '</div>' +
     '<div class="sec">' + sech('Outputs — where each signal goes', 'PATH') + (outs || '<div class="sub">No outputs connected in the photo.</div>') + '</div>' +
-    (live ? '<div class="sec">' + live + '</div>' : '') +
+    pm + (live ? '<div class="sec">' + live + '</div>' : '') +
     (r.u && r.u.length ? '<div class="note">Read with doubt: ' + esc(r.u.join('; ')) + '. Check on the screen.</div>' : '') +
     '<div class="photo">From your photos ' + esc((r.ph || []).join(', ')) + ' · Show Connection on OS042, ' + esc(r.t || '08 Nov 2026') + '. Only connected terminals are listed.</div></div>';
 }
@@ -597,26 +607,41 @@ function linkify(text){
     return hl(p);
   }).join('');
 }
+function flowSteps(steps){
+  // a step is a sentence, or [heading, [sentences]] for a grouped section
+  let h = '', open = false;
+  for (const st of steps || []){
+    if (Array.isArray(st)){ if (open) h += '</ol>'; h += '<div class="flowh">' + hl(st[0]) + '</div><ol class="flow">' + (st[1] || []).map(x => '<li>' + linkify(x) + '</li>').join('') + '</ol>'; open = false; }
+    else { if (!open){ h += '<ol class="flow">'; open = true; } h += '<li>' + linkify(st) + '</li>'; }
+  }
+  return h + (open ? '</ol>' : '');
+}
 function cardFlow(r, exact){
   return '<div class="card' + (exact ? ' exact' : '') + '"><div class="kind"><span>IAS logic chain</span><span>from your photos</span></div>' +
-    '<div class="ttl">' + hl(r.title) + '</div><ol class="flow">' + (r.steps || []).map(s => '<li>' + linkify(s) + '</li>').join('') + '</ol>' +
+    '<div class="ttl">' + hl(r.title) + '</div>' + flowSteps(r.steps) +
     '<div class="photo">' + esc(CONN.src || '') + '</div></div>';
 }
 // on a tag card: which photographed blocks use it, and the I/O channel read on board
 function sigLogic(r){
   const si = r.i != null ? r.i : BYKEY.get(r.k);
   const l = SIGLOGIC.get(si) || [];
-  const io = SIGIO.get(si);
-  if (!l.length && !io) return '';
+  const ios = SIGIO.get(si) || [];
+  if (!l.length && !ios.length) return '';
   let h = '<div class="sec">' + sech('IAS logic — from your photos', 'LOGIC');
-  if (io) h += '<div class="wired">Wired to I/O card <b>' + esc(io.m) + '</b> (RMP420-32 module in remote I/O FS42-1 of field station FS 42), channel <b>' + esc(io.c) + '</b>' +
-    (io.sg ? ' · ' + esc(io.sg) : '') + '. Value when photographed: ' + esc(io.v) + (io.e && io.e !== io.v ? ' = ' + esc(io.e) : '') + '.' +
-    (io.u ? ' <span class="sub">(row read with doubt)</span>' : '') + ' <span class="sub">' + esc(io.p) + '</span></div>';
+  for (const io of ios){
+    const md = IOMODS[io.m] || {};
+    const modbus = /Modbus/.test(md.ty || '');
+    h += '<div class="wired">' + (modbus ? 'Comes over <b>' + esc(io.m) + '</b> (' + esc(md.ty) + ', ' + esc(md.where || '') + '), row <b>' + esc(io.c) + '</b>'
+         : 'Wired to I/O card <b>' + esc(io.m) + '</b> (' + esc(md.ty || 'RMP420-32') + (md.where ? ' in ' + esc(md.where) : '') + '), channel <b>' + esc(io.c) + '</b>') +
+      (io.d === 'out' ? ' <span class="sub">output from the IAS</span>' : ' <span class="sub">input to the IAS</span>') +
+      (io.sg ? ' · ' + esc(io.sg) : '') + '. Value when photographed: ' + esc(io.v) + (io.e && io.e !== io.v ? ' = ' + esc(io.e) : '') + '.' +
+      (io.u ? ' <span class="sub">(row read with doubt)</span>' : '') + ' <span class="sub">' + esc(io.p) + '</span></div>';
+  }
   const say = {self:'Its own IAS block:', in:'Read by', out:'Written by'};
   for (const [bi, how, t] of l){
     const b = CONN.blocks[bi];
     h += '<div style="margin-top:6px;font-size:13.5px">' + say[how] + ' <button class="tag go small" data-go="' + esc(b.n) + '">' + esc(b.n) + '</button>' +
-      (t ? ' <span class="sub">' + (how === 'in' ? 'input ' : 'output ') + esc(t) + (LEARN.bterm(t) && !/^Con\d+$/.test(t) ? ' — ' + esc(LEARN.bterm(t)) : '') + '</span>' : '') + '</div>';
+      (t ? ' <span class="sub">' + (how === 'in' ? 'input ' : 'output ') + esc(t) + (LEARN.bterm(t, b.ty) && !/^Con\d+$/.test(t) ? ' — ' + esc(LEARN.bterm(t, b.ty)) : '') + '</span>' : '') + '</div>';
   }
   return h + '</div>';
 }
@@ -756,7 +781,7 @@ function home(){
     '<div class="ex">' + D.examples.concat(['turbocharger exhaust temperature']).map(x => '<button data-ex="' + esc(x) + '">' + esc(x) + '</button>').join('') + '</div>' +
     '<h2>Learning help</h2><p>Switch these on in the <b style="color:var(--ink)">Help</b> row under the search box when you need them. They stay as you leave them on this device.</p>' +
     '<div class="legend"><b>Decode tag</b><span>splits each tag into its parts and says what each part means</span><b>Plain English</b><span>writes the short yard description out in full words</span><b>What it means</b><span>a few sentences on what the signal does, its limits and where its wire goes</span><b>Explain words</b><span>underlines terms such as DPU, 4-20 mA or HH — tap one for a short explanation</span></div>' +
-    (CONN.blocks.length ? '<h2>IAS logic from your photos</h2><p>' + CONN.blocks.length + ' function blocks and ' + CONN.flows.length + ' chains read from your OS042 photos (Port and Stbd HVMSB power management). <button class="link" data-ex="DG3" style="padding:0">Start with DG3 &#8594;</button> · <button class="link" data-flt="blk" style="padding:0">see all &#8594;</button></p>' : '') +
+    (CONN.blocks.length ? '<h2>IAS logic from your photos</h2><p>' + CONN.blocks.length + ' function blocks and ' + CONN.flows.length + ' chains read from your OS042 photos: power management (DG3 / DG4 / SG2) and the ME Port master gas valve, GVU and gas-ready logic. <button class="link" data-ex="ESV-XI-CG614" style="padding:0">Master gas valve CG614 &#8594;</button> · <button class="link" data-ex="DG3" style="padding:0">DG3 &#8594;</button> · <button class="link" data-flt="blk" style="padding:0">see all &#8594;</button></p>' : '') +
     '<p>You can also search in plain words, for example <i>turbocharger exhaust temperature</i>. <button class="link" data-gloss="1" style="padding:0">Open the glossary &#8594;</button></p>' +
     '<h2>What the colours mean</h2><div class="legend">' + ['A','S','C','L','I'].map(k => roleBadge(k) + '<span>' + esc(ROLELONG[k]) + '</span>').join('') + '</div>' +
     '<p>On WinGD engine tags the last letter tells you the same thing: <b style="color:var(--ink)">A</b> alarm system, <b style="color:var(--ink)">S</b> safety system, <b style="color:var(--ink)">C</b> control system, <b style="color:var(--ink)">L / M</b> local. Kongsberg tags start with <b style="color:var(--ink)">P</b> (Port ME) or <b style="color:var(--ink)">S</b> (Stbd ME).</p>' +

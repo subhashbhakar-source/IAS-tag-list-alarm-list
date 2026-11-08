@@ -582,8 +582,28 @@ const BTERM = {
   SlowDown_PreW:'ME slowdown pre-warning', CrashAstern:'crash astern', ME_SpdHoldAct:'ME speed hold active', Add_1StandbyDG:'start one standby DG',
   '2ndStandbyDG':'start a second standby DG'
 };
-const bterm = t => BTERM[t] || (/^Con\d+$/.test(t) ? 'input ' + t.slice(3) : /_Online$/.test(t) ? t.replace(/_Online$/, '') + ' on line' :
-  /_Shutdown$/.test(t) ? 'trip ' + t.replace(/_Shutdown$/, '') + ' breaker' : /^GenLoad\d$/.test(t) ? 'load of generator ' + t.slice(-1) : '');
+// terminals that mean something else on a valve block / in the gas logic (read from the master-gas-valve photos)
+const VTERM = {
+  Opened:'valve open', Closed:'valve closed', InOpened:'open limit switch (ZSO)', InClosed:'closed limit switch (ZSC)', OutOpened:'valve is open', OutClosed:'valve is closed',
+  Open:'open pulse to the solenoid', Close:'close pulse to the solenoid', ControlOpen:'open command from logic (works in Auto)', ControlClose:'close command from logic (works in Auto)',
+  Remote:'local / remote switch', OutRemote:'valve in remote', OutCtrMode:'control mode (1 = Auto)', AutoOn:'put the valve in Auto', AutoOff:'put the valve in Manual',
+  ShutDownExt:'external shutdown — forces the valve closed while 1', ShutDown:'shutdown input', Interlock:'interlock (blocks the open command while 1)', OutInterlock:'interlocked',
+  OutTrip:'tripped', TimeOut:'travel time exceeded', Incons:'feedback inconsistent (both or neither limit switch)', Error:'error', IOError:'I/O error', AckIn:'acknowledge', AckOut:'acknowledged',
+  Failure:'valve failure input', Position:'position (analogue)', OpeningControl:'opening control value'
+};
+const GTERM = {
+  NetIn:'data arriving from the other station', NetOut:'data sent to the other station', NetFault:'network link fault', FaultAction:'fault action active', InhibitIn:'inhibit fault action', InhibitOut:'fault action inhibited',
+  InOpenCmd:'open request (GMS button)', InCloseCmd:'close request (GMS button)', CtrlFromBMS:'open command from the AutoChief (BMS = bridge manoeuvring system)', GasTripFromBMS:'gas trip from the engine side',
+  OpenCmd:'open pulse out', CloseCmd:'close pulse out', Inhibit:'inhibit', ExtFault:'external fault', OkOut:'OK status', Meas2:'second value out', InvMeas1:'inverted value out', HourCount:'running hours',
+  Inhibited:'inhibited', ActIn:'number of active inputs', 'Supply ReadyP':'GMS gas ready, Port ME', 'Supply ReadyS':'GMS gas ready, Stbd ME', 'Prepare Req_P':'prepare request from the Port AutoChief',
+  'Prepare Req_S':'prepare request from the Stbd AutoChief', TimeOut_P:'gas-ready time-out Port', TimeOut_S:'gas-ready time-out Stbd', GTFFWD:'gas-trip feed-forward to the overpressure valve',
+  MGVOP:'master gas valve opened', MGVCL:'master gas valve closed', GasMode:'engine in gas mode', GasTrip:'gas trip', InUse:'in use', InActFlow:'actual gas flow', DelayedFlow:'gas flow one step earlier',
+  OutActGasFlow:'actual gas flow out', FwdGasFlow:'forward gas flow', TxtLine:'status text on the mimic', Trip:'trip', MFGV_Closed:'master fuel gas valve closed', 'Open-CMD':'open command (from the AutoChief)',
+  Gas_Bar:'gas pressure (bar)', N2_MPa:'nitrogen pressure (MPa)', N2_Opened:'N2 valve opened', COpen:'open command to the valve', CClosed:'close command to the valve', Auto:'put the valve in Auto',
+  GFV30Auto:'GFV30 auto', LogOut:'logic output (AND: all inputs ON; OR: any input ON)'
+};
+const bterm = (t, ty) => (/valve/i.test(ty || '') && VTERM[t]) || BTERM[t] || GTERM[t] || (/^Con\d+$/.test(t) ? 'input ' + t.slice(3) : /^DIG(\d+)$/.test(t) ? 'channel ' + Number(t.slice(3)) : /_Online$/.test(t) ? t.replace(/_Online$/, '') + ' on line' :
+  /_Shutdown$/.test(t) ? 'trip ' + t.replace(/_Shutdown$/, '') + ' breaker' : /^GenLoad\d$/.test(t) ? 'load of generator ' + t.slice(-1) : /^(DI|DO|AI|AO)\d+$/.test(t) ? 'spare terminal' : '');
 
 return {_wgroup: () => WGROUP, bterm, esc, plain, same, decode, isa, signalPlain, limitBar, actionChain, actionWords, LIMNAME, GL, GLGROUPS, terms, synonyms, prep, ABBR, ABBR_DOT};
 })();
