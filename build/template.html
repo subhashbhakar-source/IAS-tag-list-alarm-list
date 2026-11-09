@@ -54,6 +54,13 @@ input{font:inherit}
 .search input{width:100%;font-size:17px;padding:12px 40px 12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);outline:none;-webkit-appearance:none;appearance:none}
 .search input:focus{border-color:var(--accent)}
 .search input::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;display:none}
+.recent{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:30;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.14);padding:6px 0;max-height:60vh;overflow:auto}
+.recent .rh{display:flex;justify-content:space-between;align-items:center;padding:4px 14px 6px;font-size:12px;color:var(--muted)}
+.recent .rh button{border:0;background:none;color:var(--accent);font-size:12px;padding:4px 0}
+.recent .ri{display:flex;align-items:center}
+.recent .ri button.rq{flex:1;text-align:left;border:0;background:none;color:var(--ink);font-size:16px;padding:10px 14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.recent .ri button.rq::before{content:'\21BA';color:var(--muted);margin-right:10px;font-size:14px}
+.recent .ri button.rx{border:0;background:none;color:var(--muted);font-size:20px;width:40px;height:40px;flex:none}
 .clear{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--muted);font-size:22px;width:34px;height:34px}
 .filters{display:flex;gap:6px;margin-top:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
 .filters::-webkit-scrollbar{display:none}
@@ -250,6 +257,7 @@ footer{color:var(--muted);font-size:11.5px;text-align:center;padding-block:8px 3
       <div class="search">
         <input id="q" type="search" inputmode="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Tag, alarm text, DPU, screen…" aria-label="Search tags and alarms">
         <button class="clear" id="clr" aria-label="Clear search" hidden>&times;</button>
+        <div id="recent" class="recent" hidden></div>
       </div>
     </div>
     <div class="filters" role="group" aria-label="Filter">
@@ -806,7 +814,7 @@ function render(){
   $out.innerHTML = html;
 }
 const hist = [];
-function navigate(q){ hist.push([$q.value, filter, sysFilter]); $q.value = q; sysFilter = null; setFilter('all'); shown = 40; render(); window.scrollTo(0, 0); }
+function navigate(q){ recentAdd($q.value); recentAdd(q); hist.push([$q.value, filter, sysFilter]); $q.value = q; sysFilter = null; setFilter('all'); shown = 40; render(); window.scrollTo(0, 0); }
 function openOne(kind, i, keep){
   if (!keep) hist.push([$q.value, filter, sysFilter]);
   view = [kind, i];
@@ -850,8 +858,34 @@ function setFilter(f){ filter = f; document.querySelectorAll('.filters button[da
 function setEngine(e){ engine = e; document.querySelectorAll('.filters button[data-e]').forEach(x => x.setAttribute('aria-pressed', x.dataset.e === e ? 'true' : 'false')); save('ias-tag-finder-engine', e); }
 try { const e0 = load('ias-tag-finder-engine'); if (e0 === 'P' || e0 === 'S') setEngine(e0); } catch(_){}
 let timer;
-$q.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => { shown = 40; render(); window.scrollTo(0, 0); }, 130); });
-$q.addEventListener('keydown', e => { if (e.key === 'Enter') $q.blur(); });
+// ---- recent searches: shown when the empty search box is tapped; kept on this device only ----
+const $rec = $('recent'), RECKEY = 'ias-tag-finder-recent', RECMAX = 12;
+function recentList(){ try{ const a = JSON.parse(load(RECKEY) || '[]'); return Array.isArray(a) ? a.filter(x => typeof x === 'string') : []; }catch(_){ return []; } }
+function recentAdd(q){
+  q = (q || '').trim(); if (q.length < 2) return;
+  const a = recentList().filter(x => x.toLowerCase() !== q.toLowerCase()); a.unshift(q); save(RECKEY, JSON.stringify(a.slice(0, RECMAX)));
+}
+function recentRemove(q){ save(RECKEY, JSON.stringify(recentList().filter(x => x !== q))); showRecent(); }
+function showRecent(){
+  const a = recentList();
+  if (!a.length || $q.value.trim() || document.activeElement !== $q){ $rec.hidden = true; $rec.innerHTML = ''; return; }
+  $rec.innerHTML = '<div class="rh"><span>Recent searches</span><button type="button" data-rclear>Clear all</button></div>' +
+    a.map(x => '<div class="ri"><button type="button" class="rq" data-rq="' + esc(x) + '">' + esc(x) + '</button><button type="button" class="rx" data-rx="' + esc(x) + '" aria-label="Remove">&times;</button></div>').join('');
+  $rec.hidden = false;
+}
+$rec.addEventListener('mousedown', e => e.preventDefault());   // keep the keyboard / focus while tapping a row
+$rec.addEventListener('click', e => {
+  const c = e.target.closest('[data-rclear]'); if (c){ save(RECKEY, null); showRecent(); return; }
+  const x = e.target.closest('[data-rx]'); if (x){ recentRemove(x.dataset.rx); return; }
+  const r = e.target.closest('[data-rq]'); if (r){ $q.value = r.dataset.rq; $rec.hidden = true; recentAdd(r.dataset.rq); shown = 40; render(); window.scrollTo(0, 0); $q.blur(); }
+});
+$q.addEventListener('focus', showRecent);
+$q.addEventListener('click', showRecent);
+$q.addEventListener('blur', () => { setTimeout(() => { if (document.activeElement !== $q) $rec.hidden = true; }, 150); if ($q.value.trim().length >= 2) recentAdd($q.value); });
+let recTimer;
+$q.addEventListener('input', () => { showRecent(); clearTimeout(timer); timer = setTimeout(() => { shown = 40; render(); window.scrollTo(0, 0); }, 130);
+  clearTimeout(recTimer); recTimer = setTimeout(() => recentAdd($q.value), 2500); });
+$q.addEventListener('keydown', e => { if (e.key === 'Enter'){ recentAdd($q.value); $q.blur(); } if (e.key === 'Escape'){ $rec.hidden = true; } });
 $clr.addEventListener('click', () => { $q.value = ''; sysFilter = null; render(); $q.focus(); });
 $('back').addEventListener('click', () => { const h = hist.pop(); if (!h) return; $q.value = h[0]; setFilter(h[1]); sysFilter = h[2]; shown = 40; render(); });
 document.querySelectorAll('.filters button[data-f]').forEach(b => b.addEventListener('click', () => { setFilter(b.dataset.f); shown = 40; render(); }));
