@@ -31,14 +31,16 @@ The code is in `build/learn.js`, inlined into the page at build time.
 
 ## IAS logic from on-board photos (added 8 Nov 2026)
 
-62 K-Chief function blocks and 9 logic chains were read from 188 photos of operator station OS042 on Al Areef
+68 K-Chief function blocks and 10 logic chains were read from 219 photos of operator station OS042 on Al Areef
 (Jiangnan H2702):
 
 * 85 photos of the power management system — DG1, DG3, DG4 and SG2 generator blocks, alarm-start, bus-fault and breaker
   trip logic, and three RMP420-32 I/O cards (FS42-1_U02, _U05, _U06);
 * 103 photos of the Port main-engine master gas valve (ESV-XI-CG614) and its surroundings — the open/close command logic
   (FLEXI-VIEW), the interlock, the ESD-station network links, the "gas mode available" / gas-ready hand-shake with the
-  AutoChief, the GVU Modbus telegram, the N2 purge valve, and the I/O cards FS51_U10, FS51_U15 and FS31-1_U05.
+  AutoChief, the GVU Modbus telegram, the N2 purge valve, and the I/O cards FS51_U10, FS51_U15 and FS31-1_U05;
+* 31 photos (9 Nov 2026) of the iCER Stbd exhaust-gas temperature points ICERS-TE-8733A … 8739A, the comparator block
+  ICERS-DYM1 that makes their high alarms from the limits sent by the iCER, and I/O card FS31-1_U02.
 
 They appear as "IAS logic block" and "IAS logic chain" cards (filter "IAS logic (photos)"). Block cards now carry a plain-language
 reading of the FLEXI-VIEW logic and the key module parameters; chain cards can have grouped steps (for example "re-opening the
