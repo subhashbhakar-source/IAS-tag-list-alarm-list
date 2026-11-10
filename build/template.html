@@ -156,6 +156,24 @@ footer{color:var(--muted);font-size:11.5px;text-align:center;padding-block:8px 3
 .lockbox button{width:100%;margin-top:10px;font-size:17px;padding:12px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-ink);font-weight:600}
 .lockbox .err{color:var(--err);min-height:20px}
 /* learning aids: help tabs, decoder, plain English, explanations, glossary sheet, limits bar, action chain */
+:root{--o:#a33f00;--o-bg:#fde3d3;--pk:#8a1f4f;--pk-bg:#fde7f0;--pk-line:#e79bbd}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--pk:#f7a8c9;--pk-bg:#3a1627;--pk-line:#7a2e52}}
+:root[data-theme="dark"]{--pk:#f7a8c9;--pk-bg:#3a1627;--pk-line:#7a2e52}
+.card{position:relative}
+.cardcopy{position:absolute;top:8px;right:8px;border:1px solid var(--line);background:var(--soft);color:var(--muted);border-radius:8px;font-size:12px;padding:4px 9px;line-height:1.3}
+.card > .kind{padding-right:64px}
+.link3{background:var(--pk-bg);border:1px solid var(--pk-line);border-radius:12px;padding:10px;margin-top:8px;color:var(--pk)}
+.link3 .lh{font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;margin-bottom:6px}
+.link3 .nd{background:var(--card);border:1px solid var(--pk-line);border-radius:10px;padding:8px 10px;color:var(--ink)}
+.link3 .nd .nl{font-size:11.5px;color:var(--pk);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.link3 .nd .nt{font-size:17px;font-weight:600;margin:2px 0}
+.link3 .nd .ns{font-size:13px;color:var(--muted)}
+.link3 .nd.me{border-width:2px}
+.link3 .ar{text-align:center;font-size:12.5px;padding:3px 0;line-height:1.25}
+.link3 .ar b{display:block;font-size:20px;line-height:1}
+.link3 dl{margin:4px 0 0;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:13.5px}
+.link3 dt{color:var(--muted)} .link3 dd{margin:0;font-weight:600}
+.link3 .cp{float:right;border:1px solid var(--pk-line);background:var(--card);color:var(--pk);border-radius:8px;font-size:12px;padding:3px 8px}
 :root{--o:#a33f00;--o-bg:#fde3d3}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--o:#ffa16b;--o-bg:#3b2414}}
 :root[data-theme="dark"]{--o:#ffa16b;--o-bg:#3b2414}
@@ -547,18 +565,26 @@ function explainBox(r, guides){
 }
 // ME only: IAS process value (MEP-/MES-3xxxx over Modbus from WiCE) <-> the local sensor on the engine
 function locSensor(r){
+  // pink block: IAS tag -> (Modbus) -> WiCE -> (cable) -> local sensor, box, terminal
+  const one = (ias, l, from) => {
+    const txt = ias + ' (IAS, ' + (D.sig[tagIdx(ias)] ? D.sig[tagIdx(ias)].d : '') + ')  <-  Modbus from WiCE  <-  ' + l.tag + ' ' + (l.d || '') + ' | box: ' + (l.box || '-') + ' | terminal: ' + (l.term || '-');
+    const nIas = '<div class="nd' + (from === 'ias' ? ' me' : '') + '"><div class="nl">IAS tag (screen value)</div><div class="nt">' + (from === 'ias' ? esc(ias) : go(ias)) + '</div></div>';
+    const nWice = '<div class="nd"><div class="nl">Engine control WiCE</div><div class="ns">receives the sensor, sends the value on</div></div>';
+    const nSen = '<div class="nd' + (from === 'sen' ? ' me' : '') + '"><div class="nl">Local sensor on the engine</div><div class="nt">' + (from === 'sen' ? esc(l.tag) : go(l.tag)) + '</div><div class="ns">' + esc(l.d || '') + '</div>' +
+      '<dl><dt>Box</dt><dd>' + esc(l.box || 'not given') + '</dd><dt>Terminal</dt><dd>' + esc(l.term || 'not given in the lists') + '</dd></dl>' + (l.n ? '<div class="ns" style="margin-top:4px">' + esc(l.n) + '</div>' : '') + '</div>';
+    return '<div class="link3"><button class="cp" data-copy="' + esc(txt) + '">Copy</button><div class="lh">IAS tag &#8596; local sensor</div>' +
+      nIas + '<div class="ar"><b>&#8593;</b>Modbus (no I/O card)</div>' + nWice + '<div class="ar"><b>&#8593;</b>sensor cable</div>' + nSen + '</div>';
+  };
   let h = '';
   if (r.loc && r.loc.length){
-    h += '<div class="sec">' + sech('Local sensor on the engine', 'PATH') +
-      '<div class="sub" style="margin-bottom:6px">This IAS tag is not wired to an I/O card. The sensor is wired to the engine control (WiCE), and WiCE sends the value to the IAS over Modbus.</div>' +
-      r.loc.map(l => '<div class="wired" style="margin-top:6px">' + go(l.tag, 'Sensor') + ' ' + esc(l.d || '') +
-        '<dl class="items">' + (l.box ? '<dt>Box on the engine</dt><dd>' + esc(l.box) + '</dd>' : '') + (l.term ? '<dt>Terminal</dt><dd><b>' + esc(l.term) + '</b></dd>' : '<dt>Terminal</dt><dd>not given in the lists</dd>') + '</dl>' +
-        (l.n ? '<div class="sub">' + esc(l.n) + '</div>' : '') + '</div>').join('') +
-      (r.loc.length > 1 ? '<div class="sub" style="margin-top:6px">The IAS value is made by WiCE from these sensors together (mean value).</div>' : '') + '</div>';
+    h += '<div class="sec">' + r.loc.map(l => one(r.k, l, 'ias')).join('') +
+      (r.loc.length > 1 ? '<div class="sub" style="margin-top:6px">WiCE makes this IAS value from these sensors together (mean value).</div>' : '') + '</div>';
   }
   if (r.ias && r.ias.length){
     const show = r.ias.filter(k => !engine || k.startsWith(engine === 'P' ? 'MEP' : 'MES'));
-    h += '<div class="sec">' + sech('IAS tag for this sensor', 'PATH') + '<div class="sub" style="margin-bottom:6px">Value shown in the IAS, received from WiCE over Modbus:</div><div class="chips">' + (show.length ? show : r.ias).map(k => go(k)).join('') + '</div></div>';
+    const me = {tag: r.k, d: r.d}, src = (D.sig[tagIdx((show[0] || r.ias[0]))] || {}).loc || [];
+    const l = src.find(x => x.tag === r.k) || me;
+    h += '<div class="sec">' + (show.length ? show : r.ias).map(k => one(k, l, 'sen')).join('') + '</div>';
   }
   return h;
 }
@@ -573,12 +599,13 @@ function cardSig(r, exact){
     '<div class="desc">' + hl(r.d) + '</div>' +
     (on('pe') && r.pd && !LEARN.same(r.pd, r.d) ? '<div class="pe"><span>Plain</span>' + hl(r.pd) + '</div>' : '') +
     (on('wim') ? explainBox(r, guides) : '') +
+    locSensor(r) +
     '<div class="fields">' +
       field('Sensor', gx(r.st)) + field('Signal', gx(r.sg)) + field('Range', hl(r.rg) + (r.u && !(r.rg || '').includes(r.u) ? ' <span class="sub">' + esc(r.u) + '</span>' : '')) +
       field('Limits', limits(r.lim)) + field('Set point', gx(r.sp)) + field('Action', LEARN.actionChain(r.ac, gx)) + field('Delay', gx(r.dl)) + field('Alarm group', gx(r.ag)) + field('Part no.', hl(r.pn)) +
     '</div>' +
     (bar ? '<div class="sec">' + sech('Limits on the measuring range', 'LIMITS') + bar + '</div>' : '') +
-    locSensor(r) + signalPath(r) + sigLogic(r) + ioRows(r) +
+    signalPath(r) + sigLogic(r) + ioRows(r) +
     (r.cf && r.cf.length ? '<div class="sec">' + sech('AutoChief safety configuration', 'CFG') + r.cf.filter(c => !engine || c.indexOf(engine === 'P' ? 'Stbd:' : 'Port:') !== 0).map(c => '<div style="font-size:13.5px;margin:3px 0">' + gx(c) + '</div>').join('') + '</div>' : '') +
     groupSection(r) +
     (guides.length ? '<div class="sec">' + sech('Guides', 'GUIDES') + guides.slice(0, 8).map(i => '<div><button class="link" data-how="' + i + '">' + esc(D.how[i].title) + ' &#8594;</button></div>').join('') + '</div>' : '') +
@@ -920,9 +947,24 @@ $out.addEventListener('click', e => {
   const f = e.target.closest('[data-fn]'); if (f){ openOne('fn', +f.dataset.fn); return; }
   const s = e.target.closest('[data-scr]'); if (s){ openOne('scr', +s.dataset.scr); return; }
   const b = e.target.closest('[data-copy]'); if (!b) return;
-  const v = b.dataset.copy, done = () => toast('Copied ' + v);
+  const v = b.dataset.copy, done = () => toast(v.length > 40 ? 'Copied' : 'Copied ' + v);
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(done, () => fallback(v, done)); else fallback(v, done);
 });
+function cardText(c){
+  const k = c.cloneNode(true); k.querySelectorAll('.cardcopy, .link3 .cp').forEach(x => x.remove());
+  k.querySelectorAll('details').forEach(x => x.setAttribute('open', ''));
+  k.style.cssText = 'position:absolute;left:-10000px;top:0;width:' + c.offsetWidth + 'px'; document.body.appendChild(k);   // must be rendered for innerText to keep line breaks
+  const t = k.innerText; k.remove();
+  return t.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+function addCardCopy(){ document.querySelectorAll('.card').forEach(c => { if (!c.querySelector(':scope > .cardcopy')){ const b = document.createElement('button'); b.className = 'cardcopy'; b.type = 'button'; b.textContent = 'Copy all'; b.setAttribute('aria-label', 'Copy everything in this card'); c.prepend(b); } }); }
+new MutationObserver(addCardCopy).observe(document.body, {childList: true, subtree: true});
+document.addEventListener('click', e => {
+  const b = e.target.closest('.cardcopy'); if (!b) return;
+  e.stopPropagation();
+  const v = cardText(b.closest('.card')), done = () => toast('Card copied');
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(done, () => fallback(v, done)); else fallback(v, done);
+}, true);
 function fallback(v, done){ const t = document.createElement('textarea'); t.value = v; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); done(); } catch(_) {} t.remove(); }
 let tt; function toast(m){ const el = $('toast'); el.textContent = m; el.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => el.classList.remove('on'), 1400); }
 $('foot').innerHTML = D.meta.foot + '<br><button class="link" id="forget">Forget access code on this device</button>';
