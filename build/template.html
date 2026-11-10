@@ -387,7 +387,7 @@ function txt(v){ if (v == null) return ''; if (Array.isArray(v)) return v.map(tx
 for (const r of rows){
   let parts;
   if (r.T === 'sig') r.pd = D.sig[r.i].pd = LEARN.plain(r.d, r);   // plain-English description, also searchable
-  if (r.T === 'sig') parts = [r.k, r.t, r.d, r.pd, SYS[r.s], r.eq, r.st, r.sg, r.rg, r.sp, r.ac, r.dl, r.from, r.to, r.box, r.pn, r.n, txt(r.lim), (r.io || []).map(x => [x.tag, x.d, 'dpu ' + x.dpu, x.mod, x.cab, 'ch ' + x.ch, x.term, x.fc, x.sp, x.n].join(' ')).join(' '), (r.cf || []).join(' '), (r.rl || []).map(x => ROLE[x]).join(' ')];
+  if (r.T === 'sig') parts = [r.k, r.t, r.d, r.pd, SYS[r.s], r.eq, r.st, r.sg, r.rg, r.sp, r.ac, r.dl, r.from, r.to, r.box, r.pn, r.n, txt(r.lim), (r.loc || []).map(l => [l.tag, l.box, l.term].join(' ')).join(' '), (r.ias || []).join(' '), (r.io || []).map(x => [x.tag, x.d, 'dpu ' + x.dpu, x.mod, x.cab, 'ch ' + x.ch, x.term, x.fc, x.sp, x.n].join(' ')).join(' '), (r.cf || []).join(' '), (r.rl || []).map(x => ROLE[x]).join(' ')];
   else if (r.T === 'grp') parts = [r.title, SYS[r.s], r.note, r.sig.map(i => D.sig[i].k + ' ' + (D.sig[i].t || []).join(' ')).join(' ')];
   else if (r.T === 'fn') parts = [r.title, SYS[r.s], r.eq, txt(r.items), txt(r.al), (r.tags || []).join(' '), r.n];
   else if (r.T === 'scr') parts = [r.title, r.sec, 'mimic screen page ' + r.page, (r.tags || []).join(' '), (r.sys || []).map(s => SYS[s]).join(' ')];
@@ -545,6 +545,23 @@ function explainBox(r, guides){
   if (r.ocr) P.push('Some values were read by OCR from a scanned page — check them on the source page.');
   return '<div class="learn"><h3>What it means</h3>' + P.map(p => '<p>' + p + '</p>').join('') + '</div>';
 }
+// ME only: IAS process value (MEP-/MES-3xxxx over Modbus from WiCE) <-> the local sensor on the engine
+function locSensor(r){
+  let h = '';
+  if (r.loc && r.loc.length){
+    h += '<div class="sec">' + sech('Local sensor on the engine', 'PATH') +
+      '<div class="sub" style="margin-bottom:6px">This IAS tag is not wired to an I/O card. The sensor is wired to the engine control (WiCE), and WiCE sends the value to the IAS over Modbus.</div>' +
+      r.loc.map(l => '<div class="wired" style="margin-top:6px">' + go(l.tag, 'Sensor') + ' ' + esc(l.d || '') +
+        '<dl class="items">' + (l.box ? '<dt>Box on the engine</dt><dd>' + esc(l.box) + '</dd>' : '') + (l.term ? '<dt>Terminal</dt><dd><b>' + esc(l.term) + '</b></dd>' : '<dt>Terminal</dt><dd>not given in the lists</dd>') + '</dl>' +
+        (l.n ? '<div class="sub">' + esc(l.n) + '</div>' : '') + '</div>').join('') +
+      (r.loc.length > 1 ? '<div class="sub" style="margin-top:6px">The IAS value is made by WiCE from these sensors together (mean value).</div>' : '') + '</div>';
+  }
+  if (r.ias && r.ias.length){
+    const show = r.ias.filter(k => !engine || k.startsWith(engine === 'P' ? 'MEP' : 'MES'));
+    h += '<div class="sec">' + sech('IAS tag for this sensor', 'PATH') + '<div class="sub" style="margin-bottom:6px">Value shown in the IAS, received from WiCE over Modbus:</div><div class="chips">' + (show.length ? show : r.ias).map(k => go(k)).join('') + '</div></div>';
+  }
+  return h;
+}
 function cardSig(r, exact){
   const tags = r.t && r.t.length ? r.t : [r.k];
   const guides = GUIDE.bySig.get(r.i != null ? r.i : BYKEY.get(r.k)) || [];
@@ -561,7 +578,7 @@ function cardSig(r, exact){
       field('Limits', limits(r.lim)) + field('Set point', gx(r.sp)) + field('Action', LEARN.actionChain(r.ac, gx)) + field('Delay', gx(r.dl)) + field('Alarm group', gx(r.ag)) + field('Part no.', hl(r.pn)) +
     '</div>' +
     (bar ? '<div class="sec">' + sech('Limits on the measuring range', 'LIMITS') + bar + '</div>' : '') +
-    signalPath(r) + sigLogic(r) + ioRows(r) +
+    locSensor(r) + signalPath(r) + sigLogic(r) + ioRows(r) +
     (r.cf && r.cf.length ? '<div class="sec">' + sech('AutoChief safety configuration', 'CFG') + r.cf.filter(c => !engine || c.indexOf(engine === 'P' ? 'Stbd:' : 'Port:') !== 0).map(c => '<div style="font-size:13.5px;margin:3px 0">' + gx(c) + '</div>').join('') + '</div>' : '') +
     groupSection(r) +
     (guides.length ? '<div class="sec">' + sech('Guides', 'GUIDES') + guides.slice(0, 8).map(i => '<div><button class="link" data-how="' + i + '">' + esc(D.how[i].title) + ' &#8594;</button></div>').join('') + '</div>' : '') +
