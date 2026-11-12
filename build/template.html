@@ -174,6 +174,9 @@ footer{color:var(--muted);font-size:11.5px;text-align:center;padding-block:8px 3
 .link3 dl{margin:4px 0 0;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:13.5px}
 .link3 dt{color:var(--muted)} .link3 dd{margin:0;font-weight:600}
 .link3 .tm{color:var(--pk)}
+.link3 .nts{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:3px 0}
+.link3 .cn{font-size:13px;color:var(--ink);margin-top:8px;line-height:1.4}
+.link3 .nd .ns .tag,.link3 .cn .tag{vertical-align:baseline}
 .link3 .cp{float:right;border:1px solid var(--pk-line);background:var(--card);color:var(--pk);border-radius:8px;font-size:12px;padding:3px 8px}
 :root{--o:#a33f00;--o-bg:#fde3d3}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--o:#ffa16b;--o-bg:#3b2414}}
@@ -399,6 +402,7 @@ CONN.blocks.forEach((b, bi) => {
 const SIGIO = new Map();      // signal index -> [I/O channels read on board]
 Object.entries(CONN.io || {}).forEach(([tag, x]) => { const si = tagIdx(tag); if (si == null) return; if (!SIGIO.has(si)) SIGIO.set(si, []); SIGIO.get(si).push(Object.assign({tag}, x)); });
 const IOMODS = CONN.iomods || {};
+const HOME = (D.meta && D.meta.home) || {};   // home-page examples come with the (encrypted) data
 
 const norm = s => String(s == null ? '' : s).toLowerCase();
 const squash = s => norm(s).replace(/[^a-z0-9]/g, '');
@@ -406,7 +410,7 @@ function txt(v){ if (v == null) return ''; if (Array.isArray(v)) return v.map(tx
 for (const r of rows){
   let parts;
   if (r.T === 'sig') r.pd = D.sig[r.i].pd = LEARN.plain(r.d, r);   // plain-English description, also searchable
-  if (r.T === 'sig') parts = [r.k, r.t, r.d, r.pd, SYS[r.s], r.eq, r.st, r.sg, r.rg, r.sp, r.ac, r.dl, r.from, r.to, r.box, r.pn, r.n, txt(r.lim), (r.loc || []).map(l => [l.tag, l.box, l.term, l.cable].join(' ')).join(' '), (r.ias || []).join(' '), (r.io || []).map(x => [x.tag, x.d, 'dpu ' + x.dpu, x.mod, x.cab, 'ch ' + x.ch, x.term, x.fc, x.sp, x.n].join(' ')).join(' '), (r.cf || []).join(' '), (r.rl || []).map(x => ROLE[x]).join(' ')];
+  if (r.T === 'sig') parts = [r.k, r.t, r.d, r.pd, SYS[r.s], r.eq, r.st, r.sg, r.rg, r.sp, r.ac, r.dl, r.from, r.to, r.box, r.pn, r.n, txt(r.lim), (r.loc || []).map(l => [l.tag, l.box, l.term, l.cable].join(' ')).join(' '), (r.ias || []).join(' '), (r.ch || []).map(c => c.cp).join(' '), (r.io || []).map(x => [x.tag, x.d, 'dpu ' + x.dpu, x.mod, x.cab, 'ch ' + x.ch, x.term, x.fc, x.sp, x.n].join(' ')).join(' '), (r.cf || []).join(' '), (r.rl || []).map(x => ROLE[x]).join(' ')];
   else if (r.T === 'grp') parts = [r.title, SYS[r.s], r.note, r.sig.map(i => D.sig[i].k + ' ' + (D.sig[i].t || []).join(' ')).join(' ')];
   else if (r.T === 'fn') parts = [r.title, SYS[r.s], r.eq, txt(r.items), txt(r.al), (r.tags || []).join(' '), r.n];
   else if (r.T === 'scr') parts = [r.title, r.sec, 'mimic screen page ' + r.page, (r.tags || []).join(' '), (r.sys || []).map(s => SYS[s]).join(' ')];
@@ -591,18 +595,34 @@ function locSensor(r){
   }
   return h;
 }
+// pink chain: any signal path given as nodes and arrows (r.ch)
+function chainBlock(r){
+  const cs = (r.ch || []).filter(c => !engine || !c.e || c.e === engine);
+  if (!cs.length) return '';
+  const AR = {up:'&#8593;', down:'&#8595;', both:'&#8597;'};
+  const node = x => '<div class="nd' + (x.me ? ' me' : '') + '"><div class="nl">' + esc(x.l) + '</div>' +
+    (x.t ? '<div class="nt">' + (x.me ? esc(x.t) : go(x.t)) + '</div>' : '') +
+    (x.ts ? x.ts.map(([t, sub]) => '<div class="nts">' + go(t, '', 'small') + (sub ? '<span class="ns">' + esc(sub) + '</span>' : '') + '</div>').join('') : '') +
+    (x.tx ? '<div class="nt">' + esc(x.tx) + '</div>' : '') +
+    (x.s ? '<div class="ns">' + linkify(x.s) + '</div>' : '') +
+    (x.dl ? '<dl>' + x.dl.map(([k, v]) => '<dt>' + esc(k) + '</dt><dd>' + esc(v) + '</dd>').join('') + '</dl>' : '') + '</div>';
+  return '<div class="sec">' + cs.map(c => '<div class="link3"><button class="cp" data-copy="' + esc(c.cp) + '">Copy</button><div class="lh">' + esc(c.h) + '</div>' +
+    c.p.map(x => x.ar != null ? '<div class="ar"><b>' + AR[x.d || 'up'] + '</b>' + esc(x.ar) + '</div>' : node(x)).join('') +
+    (c.n ? '<div class="cn">' + linkify(c.n) + '</div>' : '') +
+    (c.src ? '<div class="ns" style="margin-top:4px;font-size:12px">' + esc(c.src) + '</div>' : '') + '</div>').join('') + '</div>';
+}
 function cardSig(r, exact){
   const tags = r.t && r.t.length ? r.t : [r.k];
   const guides = GUIDE.bySig.get(r.i != null ? r.i : BYKEY.get(r.k)) || [];
   const bar = LEARN.limitBar(r);
   return '<div class="card' + (exact ? ' exact' : '') + '">' +
     '<div class="kind">' + (r.rl || ['X']).map(x => roleBadge(x)).join('') + '<span>' + sysLine(r) + '</span>' + (r.e ? '<span>ME ' + (r.e === 'P' ? 'Port' : r.e === 'S' ? 'Stbd' : 'Port + Stbd') + '</span>' : '') + (r.cy ? '<span>Cyl. ' + esc(r.cy) + '</span>' : '') + '</div>' +
-    '<div class="chips" style="margin-top:2px">' + copyChip(r.k, 'Tag') + tags.filter(t => t !== r.k).map(t => copyChip(t, 'As printed')).join('') + '</div>' +
+    '<div class="chips" style="margin-top:2px">' + copyChip(r.k, 'Tag') + tags.filter(t => t !== r.k).map(t => copyChip(t, 'Also written as')).join('') + '</div>' +
     (on('dec') ? decodeBox(r, tags) : '') +
     '<div class="desc">' + hl(r.d) + '</div>' +
     (on('pe') && r.pd && !LEARN.same(r.pd, r.d) ? '<div class="pe"><span>Plain</span>' + hl(r.pd) + '</div>' : '') +
     (on('wim') ? explainBox(r, guides) : '') +
-    locSensor(r) +
+    locSensor(r) + chainBlock(r) +
     '<div class="fields">' +
       field('Sensor', gx(r.st)) + field('Signal', gx(r.sg)) + field('Range', hl(r.rg) + (r.u && !(r.rg || '').includes(r.u) ? ' <span class="sub">' + esc(r.u) + '</span>' : '')) +
       field('Limits', limits(r.lim)) + field('Set point', gx(r.sp)) + field('Action', LEARN.actionChain(r.ac, gx)) + field('Delay', gx(r.dl)) + field('Alarm group', gx(r.ag)) + field('Part no.', hl(r.pn)) +
@@ -621,7 +641,7 @@ function cardSig(r, exact){
     refs(r.ref) + '</div>';
 }
 // ---------- IAS logic from photos ----------
-const STNAME = {PS042:'Port HVMSB logic (PS042)', PS141:'Stbd HVMSB logic (PS141)', PS151:'Cargo / GMS station (PS151)', PS052:'ME GVU & N2 purge station (PS052)', PS032:'ME Port GVU interface (PS032)', PS131:'ME Stbd machinery station (PS131)', PS081:'ESD / GBSS station (PS081)'};
+const STNAME = CONN.stname || {};   // station names come with the (encrypted) data
 // a reference like "DG3Shdloc/LogOut": block or tag name becomes a jump button, the terminal stays as text
 function refBtn(ref){
   const io = / \(I\/O channel\)$/.test(ref);
@@ -651,14 +671,14 @@ function cardBlk(r, exact){
     '<div class="sec">' + sech('Outputs — where each signal goes', 'PATH') + (outs || '<div class="sub">No outputs connected in the photo.</div>') + '</div>' +
     pm + (live ? '<div class="sec">' + live + '</div>' : '') +
     (r.u && r.u.length ? '<div class="note">Read with doubt: ' + esc(r.u.join('; ')) + '. Check on the screen.</div>' : '') +
-    '<div class="photo">From your photos ' + esc((r.ph || []).join(', ')) + ' · Show Connection on OS042, ' + esc(r.t || '08 Nov 2026') + '. Only connected terminals are listed.</div></div>';
+    '<div class="photo">From your photos ' + esc((r.ph || []).join(', ')) + ' · Show Connection on ' + esc(CONN.os || 'the operator station') + ', ' + esc(r.t || '') + '. Only connected terminals are listed.</div></div>';
 }
 // turn block and tag names inside a sentence into jump buttons
 function linkify(text){
   return String(text).split(/([A-Za-z0-9][A-Za-z0-9_\-]{1,}[A-Za-z0-9])/).map((p, i) => {
     if (i % 2 === 0) return hl(p);
     if (BLK.has(p)) return '<button class="tag go small" data-go="' + esc(p) + '">' + esc(p) + '</button>';
-    if (/\d/.test(p) && /[_-]/.test(p)){ const si = tagIdx(p); if (si != null) return '<button class="tag go small" data-go="' + esc(D.sig[si].k) + '">' + esc(p) + '</button>'; }
+    if ((/\d/.test(p) && /[_-]/.test(p) && /[A-Za-z]/.test(p)) || /^[A-Z]{2,4}\d{2,5}[A-Z]{0,2}$/.test(p)){ const si = tagIdx(p); if (si != null) return '<button class="tag go small" data-go="' + esc(D.sig[si].k) + '">' + esc(p) + '</button>'; }
     return hl(p);
   }).join('');
 }
@@ -712,7 +732,7 @@ function cardGrp(r, exact){
 }
 function cardFn(r, exact, open){
   const items = r.items || [], al = r.al || [];
-  const itemHtml = list => '<dl class="items">' + list.map(x => '<dt>' + hl(x[0]) + '</dt><dd>' + hl(x[1]) + '</dd>').join('') + '</dl>';
+  const itemHtml = list => '<dl class="items">' + list.map(x => '<dt>' + hl(x[0]) + '</dt><dd>' + linkify(x[1]) + '</dd>').join('') + '</dl>';
   return '<div class="card' + (exact ? ' exact' : '') + '"><div class="kind"><span>Logic / function</span><span>' + sysLine(r) + '</span></div>' +
     '<div class="ttl">' + hl(r.title) + '</div>' +
     (items.length ? '<div class="sec">' + (items.length > 8 && !open ? itemHtml(items.slice(0, 6)) + '<details><summary>All ' + items.length + ' rows</summary>' + itemHtml(items.slice(6)) + '</details>' : itemHtml(items)) + '</div>' : '') +
@@ -742,7 +762,7 @@ function cardCab(r, exact){
 function cardHow(r, exact){
   const tg = (GUIDE.byGuide.get(r.i) || []).map(i => D.sig[i].k);
   return '<div class="card' + (exact ? ' exact' : '') + '"><div class="kind"><span>Guide</span><span>' + esc(SYS[r.s] || '') + '</span></div>' +
-    '<div class="ttl">' + hl(r.title) + '</div><ol class="steps">' + (r.steps || []).map(s => '<li>' + hl(s) + '</li>').join('') + '</ol>' +
+    '<div class="ttl">' + hl(r.title) + '</div><ol class="steps">' + (r.steps || []).map(s => '<li>' + linkify(s) + '</li>').join('') + '</ol>' +
     (tg.length ? '<div class="sec"><div class="sech">Tags in this guide</div><div class="chips">' + tg.slice(0, 40).map(t => go(t, '', 'small')).join('') + '</div></div>' : '') +
     refs(r.ref) + '</div>';
 }
@@ -836,7 +856,8 @@ function home(){
     '<div class="ex">' + D.examples.concat(['turbocharger exhaust temperature']).map(x => '<button data-ex="' + esc(x) + '">' + esc(x) + '</button>').join('') + '</div>' +
     '<h2>Learning help</h2><p>Switch these on in the <b style="color:var(--ink)">Help</b> row under the search box when you need them. They stay as you leave them on this device.</p>' +
     '<div class="legend"><b>Decode tag</b><span>splits each tag into its parts and says what each part means</span><b>Plain English</b><span>writes the short yard description out in full words</span><b>What it means</b><span>a few sentences on what the signal does, its limits and where its wire goes</span><b>Explain words</b><span>underlines terms such as DPU, 4-20 mA or HH — tap one for a short explanation</span></div>' +
-    (CONN.blocks.length ? '<h2>IAS logic from your photos</h2><p>' + CONN.blocks.length + ' function blocks and ' + CONN.flows.length + ' chains read from your OS042 photos: power management (DG3 / DG4 / SG2), the ME Port master gas valve, GVU and gas-ready logic, and the iCER exhaust-gas temperature alarms. <button class="link" data-ex="ESV-XI-CG614" style="padding:0">Master gas valve CG614 &#8594;</button> · <button class="link" data-ex="ICERS-DYM1" style="padding:0">iCER temperatures &#8594;</button> · <button class="link" data-ex="DG3" style="padding:0">DG3 &#8594;</button> · <button class="link" data-flt="blk" style="padding:0">see all &#8594;</button></p>' : '') +
+    (CONN.blocks.length ? '<h2>IAS logic from your photos</h2><p>' + CONN.blocks.length + ' function blocks and ' + CONN.flows.length + ' chains read from your operator-station photos' + (HOME.logic ? ': ' + esc(HOME.logic.txt) + '. ' + HOME.logic.ex.map(([q, l]) => '<button class="link" data-ex="' + esc(q) + '" style="padding:0">' + esc(l) + ' &#8594;</button>').join(' · ') + ' · ' : '. ') + '<button class="link" data-flt="blk" style="padding:0">see all &#8594;</button></p>' : '') +
+    (HOME.egc ? '<h2>' + esc(HOME.egc.h) + '</h2><p>' + esc(HOME.egc.txt) + ' <button class="link" data-fn="' + HOME.egc.fn + '" style="padding:0">' + esc(HOME.egc.fnl) + ' &#8594;</button> · ' + HOME.egc.ex.map(([q, l]) => '<button class="link" data-ex="' + esc(q) + '" style="padding:0">' + esc(l) + ' &#8594;</button>').join(' · ') + '</p>' : '') +
     '<p>You can also search in plain words, for example <i>turbocharger exhaust temperature</i>. <button class="link" data-gloss="1" style="padding:0">Open the glossary &#8594;</button></p>' +
     '<h2>What the colours mean</h2><div class="legend">' + ['A','S','C','L','I'].map(k => roleBadge(k) + '<span>' + esc(ROLELONG[k]) + '</span>').join('') + '</div>' +
     '<p>On WinGD engine tags the last letter tells you the same thing: <b style="color:var(--ink)">A</b> alarm system, <b style="color:var(--ink)">S</b> safety system, <b style="color:var(--ink)">C</b> control system, <b style="color:var(--ink)">L / M</b> local. Kongsberg tags start with <b style="color:var(--ink)">P</b> (Port ME) or <b style="color:var(--ink)">S</b> (Stbd ME).</p>' +
